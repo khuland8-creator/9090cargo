@@ -83,14 +83,22 @@ async function cargoCustomerLookup(){
  if(!data.shipment){result.textContent='Ийм код, утасны дугаартай ачаа олдсонгүй. Мэдээллээ шалгана уу.';return}
  const items=data.shipments||[data.shipment];
  const heading=document.createElement('h3');heading.textContent='📦 Миний бүх ачаа ('+items.length+')';result.appendChild(heading);
- let totalPieces=0,totalWeight=0;
+ let totalPieces=0,totalWeight=0,receivedCount=0;
+ const statusNames={received:'Эрээнд хүлээн авсан',loaded:'Машинд ачсан',in_transit:'Замдаа',arrived:'Ирсэн',delivered:'Хүлээлгэн өгсөн',customs:'Гаальд',pending:'Хүлээгдэж байна'};
  for(const x of items){
- totalPieces+=Number(x.pieces)||0;totalWeight+=Number(x.weight_kg)||0;
- const title=document.createElement('strong');title.textContent=x.shipment_code+' · '+x.goods;
- const details=document.createElement('p');details.textContent='Төлөв: '+x.status+' · Ширхэг: '+x.pieces+' · Жин: '+x.weight_kg+' кг · Очих газар: '+(x.destination||'Тодорхойгүй')+' · Машин: '+(x.truck_number||'Хуваарилаагүй');
- result.append(title,details,document.createElement('hr'));
+  totalPieces+=Number(x.pieces)||0;totalWeight+=Number(x.weight_kg)||0;
+  if(x.status==='delivered')receivedCount++;
+  const card=document.createElement('div');card.className='item';card.style='padding:12px;border:1px solid #d7e4f0;border-radius:12px;margin:10px 0';
+  const title=document.createElement('strong');title.textContent=x.shipment_code+' · '+x.goods;
+  const state=document.createElement('p');state.style='font-weight:600;color:#1473bb';state.textContent='📍 '+(statusNames[x.status]||x.status||'Тодорхойгүй');
+  const details=document.createElement('div');details.className='sub';
+  const date=x.received_at?new Date(x.received_at).toLocaleDateString('mn-MN',{year:'numeric',month:'2-digit',day:'2-digit'}):'—';
+  details.textContent='Ирсэн: '+date+' · '+(x.source_label||'Илгээгч тодорхойгүй')+' · '+x.pieces+' ширхэг · '+x.weight_kg+' кг ('+(Number(x.weight_kg||0)/1000).toFixed(3)+' т) · '+(x.volume_m3||0)+' м³ · '+(x.area_m2||0)+' м² · '+(x.destination||'')+' · Машин: '+(x.truck_number||'Хуваарилаагүй');
+  card.append(title,state,details);
+  if(x.photo_url){const img=document.createElement('img');img.src=x.photo_url;img.alt='Ачааны зураг';img.loading='lazy';img.style='display:block;max-width:100%;max-height:220px;border-radius:10px;margin-top:10px';card.appendChild(img)}
+  result.appendChild(card);
  }
- const summary=document.createElement('strong');summary.textContent='Нийт '+totalPieces+' ширхэг · '+totalWeight.toFixed(2)+' кг ('+(totalWeight/1000).toFixed(3)+' тонн)';result.appendChild(summary);
+ const summary=document.createElement('p');summary.style='font-weight:700;background:#eaf4ff;padding:12px;border-radius:10px';summary.textContent='Нийт: '+totalPieces+' ширхэг · '+totalWeight.toFixed(2)+' кг ('+(totalWeight/1000).toFixed(3)+' тонн) · Хүлээлгэн өгсөн: '+receivedCount+' ачаа';result.prepend(summary);
  }catch(e){result.textContent=e.message}
 }
 function cargoGenerateCode(){
