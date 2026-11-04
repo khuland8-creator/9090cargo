@@ -255,10 +255,11 @@ async function cargoLogin(){
  }catch(e){cargoMessage('Нэвтрэхэд алдаа: '+e.message)}
 }
 async function cargoResetRequest(){
- const email=document.getElementById('authEmail').value.trim();
- if(!email)return cargoMessage('Имэйлээ оруулна уу.');
+ const entered=document.getElementById('authEmail').value.trim();
+ const email=entered.toLowerCase()==='ereen9090'?'khulan0410@icloud.com':entered;
+ if(!email||!email.includes('@'))return cargoMessage('Имэйл эсвэл Ereen9090 нэвтрэх нэрээ оруулна уу.');
  try{
-  await cargoAuthFetch('/recover',{method:'POST',body:JSON.stringify({email})});
+  await cargoAuthFetch('/recover?redirect_to='+encodeURIComponent('https://khuland8-creator.github.io/9090cargo/'),{method:'POST',body:JSON.stringify({email})});
   cargoMessage('Нууц үг сэргээх холбоос имэйлд илгээгдсэн бол шалгаарай.');
  }catch(e){cargoMessage('Имэйл илгээж чадсангүй: '+e.message)}
 }
