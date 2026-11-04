@@ -4,7 +4,7 @@
 <body><header><div style="text-align:right"><button type="button" onclick="setLang('mn')">🇲🇳 Монгол</button> <button type="button" onclick="setLang('zh')">🇨🇳 中文</button></div><h1>🚚 9090 CARGO</h1><small>Өмнөговь • iPhone демо</small></header><main>
 <section id="customerTrackPanel" style="margin-bottom:14px;border:2px solid #cbddec">
 <h2>📦 Үйлчлүүлэгч — ачаа шалгах</h2>
-<p class="hint">Нэвтрэх шаардлагагүй. Ачааны код болон хүлээн авагчийн утасны дугаараа оруулна.</p>
+<p class="hint">Нэвтрэх шаардлагагүй. Анхны ачааны код болон утасны дугаараар бүх ачааныхаа түүхийг шалгана.</p>
 <label>Ачааны код<input id="customerTrackCode" type="text" autocomplete="off" placeholder="Жишээ: 9090-00125"></label>
 <label>Утасны дугаар<input id="customerTrackPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Жишээ: 99019090"></label>
 <button type="button" onclick="cargoCustomerLookup()">Ачаа шалгах</button>
@@ -101,7 +101,7 @@ function cargoShareCustomerCode(){
  const code=document.getElementById('serverNewCode').value;
  if(!code||document.getElementById('serverShareButton').classList.contains('hide'))return;
  const codes=code.split(',').map(x=>x.trim()).filter(Boolean);const url='https://khuland8-creator.github.io/9090cargo/?track='+encodeURIComponent(codes[0]||'');
- const message='9090 CARGO 🚚\\nТаны ачааны кодууд: '+code+'\\nАчаа шалгах: '+url+'\\nХүлээн авагчийн утасны дугаараа оруулж шалгана уу.\\nКодыг бусдад дамжуулахгүй байхыг зөвлөе.';
+ const message='9090 CARGO 🚚\\nТаны байнгын шалгах код: '+code+'\\nАчаа шалгах: '+url+'\\nХүлээн авагчийн утасны дугаараа оруулж шалгана уу.\\nКодыг бусдад дамжуулахгүй байхыг зөвлөе.';
  if(navigator.clipboard?.writeText){
  navigator.clipboard.writeText(message).then(()=>{document.getElementById('serverCreateStatus').textContent='Мессеж хуулагдлаа. WeChat, Messenger эсвэл SMS-д буулгана уу.'}).catch(()=>cargoFallbackCopy(message));
  }else cargoFallbackCopy(message);
@@ -166,7 +166,10 @@ async function cargoCreateServerShipment(){
  const res=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/rest/v1/cargo_shipments',{method:'POST',headers:{apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+cargoSession.access_token,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(payload)});
  const data=await res.json();if(!res.ok)throw Error(JSON.stringify(data).slice(0,240));
  const codes=data.map(x=>x.shipment_code);
- document.getElementById('serverNewCode').value=codes.join(', ');
+ let customerCode=codes[0];
+ const lookup=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/rest/v1/cargo_shipments?select=shipment_code&customer_phone=eq.'+encodeURIComponent(phone)+'&order=received_at.asc&limit=1',{headers:{apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+cargoSession.access_token}});
+ if(lookup.ok){const history=await lookup.json();if(history.length)customerCode=history[0].shipment_code}
+ document.getElementById('serverNewCode').value=customerCode;
  box.textContent='✅ '+data.length+' ачаа серверт хадгалагдлаа. Кодууд: '+codes.join(', ');
  document.getElementById('serverShareButton').classList.remove('hide');
  document.getElementById('serverCargoRows').replaceChildren();cargoAddItemRow();cargoLoadServerShipments();
