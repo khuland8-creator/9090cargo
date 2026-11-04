@@ -1,7 +1,24 @@
 <!doctype html>
 <html lang="mn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#123c62"><title>9090 CARGO туршилт</title><style>
 *{box-sizing:border-box}body{font:16px -apple-system,BlinkMacSystemFont,Arial;margin:0;background:#eef3f8;color:#17324c}header{background:#123c62;color:#fff;padding:26px 20px}h1{margin:0}small{opacity:.8}main{padding:16px;max-width:640px;margin:auto}.warn{background:#fff1cf;padding:12px;border-radius:10px;font-size:13px;margin-bottom:14px}.tabs{display:flex;gap:8px;margin:12px 0}.tabs button{flex:1}button{border:0;border-radius:10px;padding:12px;font-size:15px;font-weight:600;background:#dce8f2;color:#12416a}.active,.save{background:#1473bb;color:white}section{background:#fff;padding:16px;border-radius:14px}.hide{display:none}label{display:block;margin-top:12px;font-size:14px;font-weight:600}input,select{width:100%;padding:12px;margin-top:5px;border:1px solid #cbd5e1;border-radius:9px;font:inherit}.item{padding:13px 0;border-bottom:1px solid #e2e8f0}.item:last-child{border:0}.sub{font-size:13px;color:#66788c;margin-top:4px}.pill{display:inline-block;border-radius:20px;background:#dceeff;padding:5px 9px;font-size:12px}.flex{display:flex;justify-content:space-between;gap:8px;align-items:center}.empty{text-align:center;padding:25px;color:#66788c}footer{text-align:center;font-size:12px;color:#66788c;padding:22px} .photo{max-width:110px;max-height:100px;object-fit:cover;border-radius:9px;margin-top:9px}.qrbox{padding:12px;background:#f5f9fd;border-radius:12px;margin-top:10px}.qrbox img{width:160px;height:160px;display:block;margin:8px auto}.hint{font-size:12px;color:#6b7d8e}.summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}.metric{background:#f0f6fc;border-radius:10px;padding:12px}.metric strong{display:block;font-size:21px}.metric small{font-size:12px;color:#536c83}.history{background:#f8fafc;padding:9px;border-radius:9px;margin:9px 0}.history div{padding:5px 0;font-size:12px;color:#475569;border-bottom:1px solid #e5e7eb}.history div:last-child{border:0}.actions{display:flex;gap:7px;flex-wrap:wrap}.actions button{font-size:13px;padding:9px}.report{background:#fff;border-radius:14px;padding:15px;margin:12px 0}.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.filters select{min-width:0;font-size:13px}.report select{margin:8px 0}.smallbtn{font-size:13px;padding:9px}.photo-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.photo-grid img{width:78px;height:78px;object-fit:cover;border-radius:9px}.photo-grid button{padding:5px;font-size:12px}.photo-large{max-width:95vw;max-height:78vh;object-fit:contain}.photo-dialog{border:0;border-radius:12px;padding:15px;max-width:98vw}.photo-dialog::backdrop{background:#000b}.manifest{border-collapse:collapse;width:100%;font-size:12px}.manifest td,.manifest th{padding:7px;border-bottom:1px solid #dce5ee;text-align:left;white-space:nowrap}.manifest th{background:#eef3f8}.trip-card{border:1px solid #d8e5f1;padding:12px;border-radius:10px;margin:9px 0}.trip-card button{margin-top:8px}.queue-summary{background:#eef6ff;padding:12px;border-radius:10px;margin-top:12px}.queue-item{font-size:13px;padding:7px 0;border-bottom:1px solid #d6e4f2}.overdue{color:#a33b14;font-weight:700}</style></head>
-<body><header><div style="text-align:right"><button type="button" onclick="setLang('mn')">🇲🇳 Монгол</button> <button type="button" onclick="setLang('zh')">🇨🇳 中文</button></div><h1>🚚 9090 CARGO</h1><small>Өмнөговь • iPhone демо</small></header><main><div class="warn">⚠️ Демо админы товч нь жинхэнэ хамгаалалт биш. Энэ бол туршилтын дэлгэц. Бүртгэл зөвхөн энэ браузерт хадгалагдана. Бодит хүний нэр, утас, төлбөрийн мэдээлэл бүү оруулаарай.</div><div class="tabs"><button id="b1" class="active" onclick="tab(1)">Ачааны жагсаалт</button><button id="b2" onclick="tab(2)">+ Ачаа бүртгэх</button><button id="b3" onclick="tab(3)">Тайлан</button></div>
+<body><header><div style="text-align:right"><button type="button" onclick="setLang('mn')">🇲🇳 Монгол</button> <button type="button" onclick="setLang('zh')">🇨🇳 中文</button></div><h1>🚚 9090 CARGO</h1><small>Өмнөговь • iPhone демо</small></header><main>
+<section id="authPanel" style="margin-bottom:14px;border:2px solid #cbddec">
+<h2>🔐 Admin9090 нэвтрэлт</h2>
+<p class="hint">Энэ нэвтрэлт Supabase-д холбогдоно. Доорх ачааны демо одоогоор тусдаа, зөвхөн энэ утсанд хадгалагдана.</p>
+<div id="authStatus" class="sub" role="status">Нэвтрээгүй</div>
+<div id="authLogin">
+<label>Имэйл<input id="authEmail" type="email" autocomplete="username" value="khulan0410@icloud.com"></label>
+<label>Нууц үг<input id="authPassword" type="password" autocomplete="current-password"></label>
+<p><button type="button" onclick="cargoLogin()">Нэвтрэх</button> <button type="button" onclick="cargoResetRequest()">Нууц үг сэргээх имэйл</button></p>
+</div>
+<div id="authRecovery" class="hide">
+<p>Шинэ нууц үгээ энд тохируулна.</p>
+<label>Шинэ нууц үг<input id="authNewPassword" type="password" autocomplete="new-password" minlength="12"></label>
+<label>Нууц үгээ давтах<input id="authConfirmPassword" type="password" autocomplete="new-password" minlength="12"></label>
+<p><button type="button" onclick="cargoSetPassword()">Нууц үг хадгалах</button></p>
+</div>
+<button type="button" id="authLogout" class="hide" onclick="cargoLogout()">Гарах</button>
+</section><div class="warn">⚠️ Демо админы товч нь жинхэнэ хамгаалалт биш. Энэ бол туршилтын дэлгэц. Бүртгэл зөвхөн энэ браузерт хадгалагдана. Бодит хүний нэр, утас, төлбөрийн мэдээлэл бүү оруулаарай.</div><div class="tabs"><button id="b1" class="active" onclick="tab(1)">Ачааны жагсаалт</button><button id="b2" onclick="tab(2)">+ Ачаа бүртгэх</button><button id="b3" onclick="tab(3)">Тайлан</button></div>
 <section id="s1"><input id="search" placeholder="Ачааны код, бараагаар хайх" oninput="draw()"><div class="filters"><select id="filterStatus" onchange="draw()"><option value="">Бүх төлөв</option><option>Эрээнд хүлээн авсан</option><option>Ачилтад хүлээж байна</option><option>Машинд ачсан</option><option>Монголд ирсэн</option><option>Хүлээлгэн өгсөн</option></select><select id="filterTruck" onchange="draw()"><option value="">Бүх машин</option><option>6361</option><option>8586</option><option>1005</option><option>6124</option><option>1864</option><option>7784</option></select></div><div id="waitingSummary"></div><div id="results"></div></section><section id="s2" class="hide"><form id="form"><label>Туршилтын нэр<input name="customer" placeholder="Жишээ: Туршилт 1" required maxlength="50"></label><label>Барааны нэр<input name="goods" placeholder="Жишээ: Хайрцаг" required maxlength="100"></label><label>Ширхэг<input name="pieces" type="number" min="1" value="1" required></label><label>Жин (кг)<input name="weight" type="number" min="0" step=".01"></label><label>Эзлэхүүн (м³ / метр куб)<input name="volume" type="number" min="0" step="0.001" placeholder="Жишээ: 10.21"></label><label>Талбай (м² / метр квадрат)<input name="area" type="number" min="0" step="0.01" placeholder="Жишээ: 12.5"></label><label>Үнийн тооцооны төрөл<select name="rateType" id="rateType"><option value="manual">Гараар үнэ оруулах</option><option value="ton">Тонн (тн)</option><option value="cube">Метр куб (м³)</option><option value="square">Метр квадрат (м²)</option></select></label><label>Нэгжийн тариф (¥)<input name="unitRate" id="unitRate" type="number" min="0" step=".01" placeholder="Жишээ: 500"></label><p class="hint" id="calcPreview">Гараар тээврийн үнэ оруулна.</p><label>Тээврийн төлбөр (¥, туршилт)<input name="fee" type="number" min="0" step=".01" placeholder="0"></label><label>Төлсөн дүн (¥, туршилт)<input name="paidAmount" type="number" min="0" step=".01" value="0"></label><label>Машины дугаар<select name="truck"><option value="">Хуваарилаагүй</option><option>6361</option><option>8586</option><option>1005</option><option>6124</option><option>1864</option><option>7784</option></select></label><label>Ачааны зураг</label><div class="filters"><button type="button" onclick="document.getElementById('cameraPhoto').click()">📷 Камераар авах</button><button type="button" onclick="document.getElementById('galleryPhoto').click()">🖼️ Галлерейгаас сонгох</button></div><input id="cameraPhoto" type="file" accept="image/*" capture="environment" style="display:none" onchange="photoSelected(this,'camera')"><input id="galleryPhoto" type="file" accept="image/*" multiple style="display:none" onchange="photoSelected(this,'gallery')"><p class="hint" id="photoInfo">Зураг сонгоогүй байна (5 хүртэл зураг)</p><div id="photoPreviews" class="photo-grid"></div><button type="button" class="smallbtn" onclick="clearPhotos()">Зургуудыг арилгах</button><label>Хүрэх газар<select name="destination"><option>Өмнөговь</option><option>Улаанбаатар</option><option>Дорнод</option><option>Сүхбаатар</option></select></label><p><button class="save" style="width:100%" type="submit">Бүртгэж хадгалах</button></p></form></section><section id="s3" class="hide"><h3>Туршилтын тайлан</h3><div id="summary"></div><label>Тайлангийн машин<select id="reportTruck" onchange="renderReport()"><option value="">Бүх машин</option><option>6361</option><option>8586</option><option>1005</option><option>6124</option><option>1864</option><option>7784</option></select></label><label>Төлбөрийн төлөв<select id="reportPayment" onchange="renderReport()"><option value="">Бүгд</option><option value="unpaid">Төлөөгүй</option><option value="partial">Хэсэгчлэн</option><option value="paid">Бүрэн төлсөн</option></select></label><label>Рейсийн дугаар<input id="tripNumber" placeholder="Жишээ: 6361-20261104-01" oninput="renderReport()"></label><div class="filters"><button type="button" onclick="assignTrip()">Сонгосон машины ачааг рейст холбох</button><button type="button" onclick="markTripDeparted()">Рейс замд гарсан</button></div><p class="hint">Рейсийг зөвхөн бодитоор ачсан ачаанд холбоно. Өмнөх рейсийн ачааг дахин холбохгүй.</p><h3>📦 Дараагийн рейст ачаа сонгох</h3><p class="hint">Агуулахад байгаа ачааг сонгож, машинд хуваарилна. Энэ үйлдэл нь бодит ачилт хийгдсэн гэсэн үг биш.</p><div id="nextTripQueue"></div><p><button type="button" onclick="assignWaitingToTruck()">Сонгосон ачааг машинд хуваарилах</button></p><div id="tripHistory"></div><div id="truckManifest"></div><p><button class="save" onclick="downloadCSV()">CSV тайлан татах</button> <button type="button" onclick="backupDemo()">💾 Нөөц файл хадгалах</button> <button onclick="downloadManifest()">🚚 Ачилтын падаан CSV</button></p><p class="hint">Энэ тайлан зөвхөн энэ браузерт байгаа туршилтын бүртгэлээс гарна. Бодит санхүүгийн тайлан биш.</p></section><footer>9090 CARGO • Зөвхөн демо • Сервергүй</footer></main><dialog id="photoDialog" class="photo-dialog" onclick="if(event.target===this)this.close()"><button type="button" onclick="document.getElementById('photoDialog').close()">✕ Хаах</button><p><img id="largePhoto" class="photo-large" alt="Томруулсан ачааны зураг"></p></dialog>
 <script>
 const KEY='cargo9090_demo';let rows=[];try{rows=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
@@ -44,5 +61,80 @@ document.getElementById('form').onsubmit=async e=>{e.preventDefault();const f=e.
 let lang=localStorage.getItem('cargo9090_lang')||'mn';const originalText=new WeakMap();
 function applyLang(){document.documentElement.lang=lang;document.querySelectorAll('body *').forEach(el=>{if(['SCRIPT','STYLE','INPUT','TEXTAREA'].includes(el.tagName))return;for(const node of el.childNodes){if(node.nodeType!==3||!node.textContent.trim())continue;if(!originalText.has(node))originalText.set(node,node.textContent);const original=originalText.get(node),trim=original.trim();if(lang==='zh'&&translations[trim])node.textContent=original.replace(trim,translations[trim]);else if(lang==='mn')node.textContent=original}})}
 function setLang(v){lang=v;localStorage.setItem('cargo9090_lang',v);applyLang()}
+
+const CARGO_AUTH_URL='https://hctnhiiytzhlphalwupl.supabase.co/auth/v1';
+const CARGO_PUBLIC_KEY='sb_publishable_a68ulN3sP3aQ2yyNP2Jx4w_P9Px2gD6';
+let cargoSession=null,cargoRecoveryToken=null;
+function cargoMessage(message){document.getElementById('authStatus').textContent=message}
+async function cargoAuthFetch(path,options={}){
+ const headers={'apikey':CARGO_PUBLIC_KEY,'Content-Type':'application/json',...(options.headers||{})};
+ const response=await fetch(CARGO_AUTH_URL+path,{...options,headers});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(data.msg||data.error_description||data.message||'Алдаа '+response.status);
+ return data;
+}
+async function cargoLogin(){
+ const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;
+ if(!email||!password)return cargoMessage('Имэйл, нууц үгээ оруулна уу.');
+ try{
+  cargoMessage('Нэвтэрч байна…');
+  const data=await cargoAuthFetch('/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});
+  cargoSession=data;
+  const user=await cargoAuthFetch('/user',{headers:{Authorization:'Bearer '+data.access_token}});
+  if(user.app_metadata?.cargo_role!=='admin'){cargoSession=null;return cargoMessage('Админы эрх баталгаажаагүй байна.')}
+  document.getElementById('authLogin').classList.add('hide');
+  document.getElementById('authLogout').classList.remove('hide');
+  cargoMessage('Admin9090 — Supabase нэвтрэлт амжилттай. Ачааны демо одоогоор серверт холбогдоогүй.');
+ }catch(e){cargoMessage('Нэвтрэхэд алдаа: '+e.message)}
+}
+async function cargoResetRequest(){
+ const email=document.getElementById('authEmail').value.trim();
+ if(!email)return cargoMessage('Имэйлээ оруулна уу.');
+ try{
+  await cargoAuthFetch('/recover',{method:'POST',body:JSON.stringify({email})});
+  cargoMessage('Нууц үг сэргээх холбоос имэйлд илгээгдсэн бол шалгаарай.');
+ }catch(e){cargoMessage('Имэйл илгээж чадсангүй: '+e.message)}
+}
+async function cargoSetPassword(){
+ const a=document.getElementById('authNewPassword').value,b=document.getElementById('authConfirmPassword').value;
+ if(a.length<12)return cargoMessage('Нууц үг дор хаяж 12 тэмдэгттэй байна.');
+ if(a!==b)return cargoMessage('Хоёр нууц үг таарахгүй байна.');
+ if(!cargoRecoveryToken)return cargoMessage('Сэргээх холбоосоо дахин нээнэ үү.');
+ try{
+  await cargoAuthFetch('/user',{method:'PUT',headers:{Authorization:'Bearer '+cargoRecoveryToken},body:JSON.stringify({password:a})});
+  cargoRecoveryToken=null;
+  document.getElementById('authRecovery').classList.add('hide');
+  document.getElementById('authLogin').classList.remove('hide');
+  document.getElementById('authPassword').value='';
+  document.getElementById('authNewPassword').value='';
+  document.getElementById('authConfirmPassword').value='';
+  cargoMessage('Нууц үг хадгалагдлаа. Одоо имэйл болон шинэ нууц үгээр нэвтэрнэ үү.');
+ }catch(e){cargoMessage('Нууц үг хадгалахад алдаа: '+e.message)}
+}
+async function cargoLogout(){
+ if(cargoSession?.access_token){try{await cargoAuthFetch('/logout',{method:'POST',headers:{Authorization:'Bearer '+cargoSession.access_token}})}catch(e){}}
+ cargoSession=null;
+ document.getElementById('authLogin').classList.remove('hide');
+ document.getElementById('authLogout').classList.add('hide');
+ document.getElementById('authPassword').value='';
+ cargoMessage('Гарлаа.');
+}
+function cargoHandleAuthRedirect(){
+ const hash=new URLSearchParams(location.hash.slice(1));
+ const query=new URLSearchParams(location.search);
+ const token=hash.get('access_token');
+ const type=hash.get('type')||query.get('type');
+ const error=hash.get('error_description')||query.get('error_description');
+ if(token||error){history.replaceState(null,'',location.pathname)}
+ if(error){cargoMessage('Холбоосын алдаа: '+error);return}
+ if(token&&(type==='recovery'||type==='invite')){
+  cargoRecoveryToken=token;
+  document.getElementById('authLogin').classList.add('hide');
+  document.getElementById('authRecovery').classList.remove('hide');
+  cargoMessage('Холбоос баталгаажлаа. Шинэ нууц үгээ оруулна уу.');
+ }
+}
+cargoHandleAuthRedirect();
+
 draw();applyLang();
 </script></body></html>
