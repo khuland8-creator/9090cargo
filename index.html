@@ -71,9 +71,9 @@ function setLang(v){lang=v;localStorage.setItem('cargo9090_lang',v);applyLang()}
 
 async function cargoCustomerLookup(){
  const code=document.getElementById('customerTrackCode').value.trim().toUpperCase();
- const phone=document.getElementById('customerTrackPhone').value.replace(/[\\s()-]/g,'').trim();
+ const phone=document.getElementById('customerTrackPhone').value.replace(/[\s()-]/g,'').trim();
  const result=document.getElementById('customerTrackResult');
- if(code.length<5||!/^\\+?\\d{8,15}$/.test(phone)){result.textContent='Ачааны код болон 8–15 оронтой утасны дугаараа зөв оруулна уу.';return}
+ if(code.length<5||!/^\+?\d{8,15}$/.test(phone)){result.textContent='Ачааны код болон 8–15 оронтой утасны дугаараа зөв оруулна уу.';return}
  result.textContent='Шалгаж байна…';
  try{
  const res=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/functions/v1/cargo-track',{method:'POST',headers:{'Content-Type':'application/json','apikey':CARGO_PUBLIC_KEY},body:JSON.stringify({code,phone})});
@@ -115,9 +115,9 @@ async function cargoCreateServerShipment(){
  document.getElementById('serverShareButton').classList.add('hide');
  const code=document.getElementById('serverNewCode').value.trim().toUpperCase();
  const goods=document.getElementById('serverNewGoods').value.trim();
- const phone=document.getElementById('serverNewPhone').value.replace(/[\\s()-]/g,'').trim();
+ const phone=document.getElementById('serverNewPhone').value.replace(/[\s()-]/g,'').trim();
  const pieces=Number(document.getElementById('serverNewPieces').value);
- if(code.length<5||!goods||!/^\\+?\\d{8,15}$/.test(phone)||!Number.isInteger(pieces)||pieces<1){box.textContent='Код, бараа, утас, ширхэгийг зөв бөглөнө үү.';return}
+ if(code.length<5||!goods||!/^\+?\d{8,15}$/.test(phone)||!Number.isInteger(pieces)||pieces<1){box.textContent='Код, бараа, утас, ширхэгийг зөв бөглөнө үү.';return}
  box.textContent='Серверт хадгалж байна…';
  try{
  const res=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/rest/v1/cargo_shipments',{method:'POST',headers:{apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+cargoSession.access_token,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({shipment_code:code,goods,customer_phone:phone,pieces,created_by:null})});
