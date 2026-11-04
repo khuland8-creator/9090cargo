@@ -82,11 +82,15 @@ async function cargoCustomerLookup(){
  result.replaceChildren();
  if(!data.shipment){result.textContent='Ийм код, утасны дугаартай ачаа олдсонгүй. Мэдээллээ шалгана уу.';return}
  const items=data.shipments||[data.shipment];
+ const heading=document.createElement('h3');heading.textContent='📦 Миний бүх ачаа ('+items.length+')';result.appendChild(heading);
+ let totalPieces=0,totalWeight=0;
  for(const x of items){
+ totalPieces+=Number(x.pieces)||0;totalWeight+=Number(x.weight_kg)||0;
  const title=document.createElement('strong');title.textContent=x.shipment_code+' · '+x.goods;
  const details=document.createElement('p');details.textContent='Төлөв: '+x.status+' · Ширхэг: '+x.pieces+' · Жин: '+x.weight_kg+' кг · Очих газар: '+(x.destination||'Тодорхойгүй')+' · Машин: '+(x.truck_number||'Хуваарилаагүй');
  result.append(title,details,document.createElement('hr'));
  }
+ const summary=document.createElement('strong');summary.textContent='Нийт '+totalPieces+' ширхэг · '+totalWeight.toFixed(2)+' кг ('+(totalWeight/1000).toFixed(3)+' тонн)';result.appendChild(summary);
  }catch(e){result.textContent=e.message}
 }
 function cargoGenerateCode(){
@@ -170,7 +174,7 @@ async function cargoCreateServerShipment(){
  const lookup=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/rest/v1/cargo_shipments?select=shipment_code&customer_phone=eq.'+encodeURIComponent(phone)+'&order=received_at.asc&limit=1',{headers:{apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+cargoSession.access_token}});
  if(lookup.ok){const history=await lookup.json();if(history.length)customerCode=history[0].shipment_code}
  document.getElementById('serverNewCode').value=customerCode;
- box.textContent='✅ '+data.length+' ачаа серверт хадгалагдлаа. Кодууд: '+codes.join(', ');
+ box.textContent='✅ '+data.length+' ачаа серверт хадгалагдлаа. Байнгын шалгах код: '+customerCode+'. Шинэ ачааны кодууд: '+codes.join(', ');
  document.getElementById('serverShareButton').classList.remove('hide');
  document.getElementById('serverCargoRows').replaceChildren();cargoAddItemRow();cargoLoadServerShipments();
  }catch(e){box.textContent='Хадгалах үед алдаа: '+e.message}
