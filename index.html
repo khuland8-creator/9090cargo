@@ -81,10 +81,14 @@ async function cargoLogin(){
   const data=await cargoAuthFetch('/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});
   cargoSession=data;
   const user=await cargoAuthFetch('/user',{headers:{Authorization:'Bearer '+data.access_token}});
-  if(user.app_metadata?.cargo_role!=='admin'){cargoSession=null;return cargoMessage('Админы эрх баталгаажаагүй байна.')}
+  const staffResponse=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/rest/v1/cargo_staff?select=username,staff_role,active&user_id=eq.'+encodeURIComponent(user.id),{headers:{apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+data.access_token}});
+  const staffRows=await staffResponse.json();
+  if(!staffResponse.ok)throw new Error(staffRows.message||'Эрх шалгаж чадсангүй');
+  const staff=staffRows[0];
+  if(!staff||staff.staff_role!=='admin'||!staff.active){cargoSession=null;return cargoMessage('Админы эрх баталгаажаагүй байна.')}
   document.getElementById('authLogin').classList.add('hide');
   document.getElementById('authLogout').classList.remove('hide');
-  cargoMessage('Admin9090 — Supabase нэвтрэлт амжилттай. Серверийн ачааг доорх тусдаа хэсгээс харна.');
+  cargoMessage(staff.username+' — Supabase нэвтрэлт амжилттай. Серверийн ачааг доорх тусдаа хэсгээс харна.');
   document.getElementById('serverPanel').classList.remove('hide');
   cargoLoadServerShipments();
  }catch(e){cargoMessage('Нэвтрэхэд алдаа: '+e.message)}
