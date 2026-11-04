@@ -99,7 +99,7 @@ function cargoShareCustomerCode(){
  const code=document.getElementById('serverNewCode').value;
  if(!code||document.getElementById('serverShareButton').classList.contains('hide'))return;
  const codes=code.split(',').map(x=>x.trim()).filter(Boolean);const url='https://khuland8-creator.github.io/9090cargo/?track='+encodeURIComponent(codes[0]||'');
- const message='9090 CARGO 🚚\\nТаны ачааны код: '+code+'\\nАчаа шалгах: '+url+'\\nХүлээн авагчийн утасны дугаараа оруулж шалгана уу.\\nКодыг бусдад дамжуулахгүй байхыг зөвлөе.';
+ const message='9090 CARGO 🚚\\nТаны ачааны кодууд: '+code+'\\nАчаа шалгах: '+url+'\\nХүлээн авагчийн утасны дугаараа оруулж шалгана уу.\\nКодыг бусдад дамжуулахгүй байхыг зөвлөе.';
  if(navigator.clipboard?.writeText){
  navigator.clipboard.writeText(message).then(()=>{document.getElementById('serverCreateStatus').textContent='Мессеж хуулагдлаа. WeChat, Messenger эсвэл SMS-д буулгана уу.'}).catch(()=>cargoFallbackCopy(message));
  }else cargoFallbackCopy(message);
@@ -134,9 +134,9 @@ function cargoRecalculate(){
 async function cargoCreateServerShipment(){
  const box=document.getElementById('serverCreateStatus'),btn=document.getElementById('serverSaveButton');
  if(!cargoSession?.access_token){box.textContent='Эхлээд нэвтэрнэ үү.';return}
- const phone=document.getElementById('serverNewPhone').value.replace(/[\\s()-]/g,'').trim();
+ const phone=document.getElementById('serverNewPhone').value.replace(/[\s()-]/g,'').trim();
  const rows=[...document.querySelectorAll('.cargo-item-entry')];
- if(!/^\\+?\\d{8,15}$/.test(phone)||!rows.length){box.textContent='Утасны дугаар болон дор хаяж нэг ачаа оруулна уу.';return}
+ if(!/^\+?\d{8,15}$/.test(phone)||!rows.length){box.textContent='Утасны дугаар болон дор хаяж нэг ачаа оруулна уу.';return}
  const entries=[];
  for(const row of rows){
  const get=cls=>row.querySelector(cls).value.trim();
