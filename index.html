@@ -13,7 +13,13 @@
 <h2>🔐 Admin9090 нэвтрэлт</h2>
 <p class="hint">Энэ нэвтрэлт Supabase-д холбогдоно. Доорх ачааны демо одоогоор тусдаа, зөвхөн энэ утсанд хадгалагдана.</p>
 <div id="authStatus" class="sub" role="status">Нэвтрээгүй</div>
-<div id="authLogin">
+<div id="authPhoneLogin" style="border:1px solid #cbddec;border-radius:10px;padding:12px;margin:10px 0">
+<h3>📱 Ereen9090 — SMS кодоор нэвтрэх</h3>
+<p class="hint">Ажилтны бүртгэл баталгаажсан үед +976 улсын кодтой дугаараар SMS код авч нэвтэрнэ.</p>
+<label>Утасны дугаар<input id="authPhone" type="tel" inputmode="tel" autocomplete="tel" value="+97695901080"></label>
+<button type="button" onclick="cargoSendPhoneOtp()">SMS код авах</button>
+<div id="authOtpPanel" class="hide"><label>SMS баталгаажуулах код<input id="authOtpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6 оронтой код"></label><button type="button" onclick="cargoVerifyPhoneOtp()">Кодоор нэвтрэх</button></div>
+</div><div id="authLogin">
 <label>Имэйл<input id="authEmail" type="email" autocomplete="username" value="khulan0410@icloud.com"></label>
 <label>Нууц үг<input id="authPassword" type="password" autocomplete="current-password"></label>
 <p><button type="button" onclick="cargoLogin()">Нэвтрэх</button> <button type="button" onclick="cargoResetRequest()">Нууц үг сэргээх имэйл</button></p>
@@ -230,6 +236,41 @@ async function cargoAuthFetch(path,options={}){
  if(!response.ok)throw new Error(data.msg||data.error_description||data.message||'Алдаа '+response.status);
  return data;
 }
+function cargoNormalizedPhone(){
+ const value=document.getElementById('authPhone').value.replace(/[\\s()-]/g,'');
+ return value.startsWith('+')?value:'+976'+value;
+}
+async function cargoSendPhoneOtp(){
+ const phone=cargoNormalizedPhone();
+ if(!/^\\+\\d{10,15}$/.test(phone))return cargoMessage('Утасны дугаараа улсын кодтой зөв оруулна уу.');
+ try{
+  cargoMessage('SMS код илгээх хүсэлт явуулж байна…');
+  await cargoAuthFetch('/otp',{method:'POST',body:JSON.stringify({phone,create_user:false})});
+  document.getElementById('authOtpPanel').classList.remove('hide');
+  cargoMessage('SMS код илгээгдсэн бол утсандаа ирсэн кодыг оруулна уу.');
+ }catch(e){cargoMessage('SMS код авах боломжгүй: '+e.message+' (Supabase SMS үйлчилгээ болон ажилтны бүртгэлийг шалгана уу.)')}
+}
+async function cargoVerifyPhoneOtp(){
+ const phone=cargoNormalizedPhone(),token=document.getElementById('authOtpCode').value.trim();
+ if(!/^\\d{4,8}$/.test(token))return cargoMessage('SMS кодоо зөв оруулна уу.');
+ try{
+  cargoMessage('SMS кодыг шалгаж байна…');
+  const data=await cargoAuthFetch('/verify',{method:'POST',body:JSON.stringify({phone,token,type:'sms'})});
+  if(!data.access_token||!data.user?.id)throw Error('Нэвтрэх эрх ирсэнгүй');
+  const response=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/rest/v1/cargo_staff?select=username,staff_role,active&user_id=eq.'+encodeURIComponent(data.user.id),{headers:{apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+data.access_token}});
+  if(!response.ok)throw Error('Ажилтны эрх шалгаж чадсангүй');
+  const staff=(await response.json())[0];
+  if(!staff||!staff.active||staff.staff_role!=='ereen'||staff.username!=='Ereen9090')throw Error('Ereen9090 ажилтны эрх бүртгэгдээгүй байна');
+  cargoSession={...data,staffRole:'ereen'};
+  cargoApplyStaffPermissions();
+  document.getElementById('authLogin').classList.add('hide');
+  document.getElementById('authPhoneLogin').classList.add('hide');
+  document.getElementById('authLogout').classList.remove('hide');
+  document.getElementById('serverPanel').classList.remove('hide');
+  cargoSetWarehouseLanguage('zh');
+  cargoMessage('Ereen9090 — агуулахын ажилтнаар нэвтэрлээ.');
+ }catch(e){cargoMessage('Нэвтрэх боломжгүй: '+e.message)}
+}
 async function cargoLogin(){
  const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;
  if(!email||!password)return cargoMessage('Имэйл, нууц үгээ оруулна уу.');
@@ -295,6 +336,9 @@ async function cargoLogout(){
  document.getElementById('serverPanel').classList.add('hide');
  document.getElementById('serverShipments').textContent='';
  document.getElementById('authLogin').classList.remove('hide');
+ document.getElementById('authPhoneLogin').classList.remove('hide');
+ document.getElementById('authOtpPanel').classList.add('hide');
+ document.getElementById('authOtpCode').value='';
  document.getElementById('authLogout').classList.add('hide');
  document.getElementById('authPassword').value='';
  cargoMessage('Гарлаа.');
