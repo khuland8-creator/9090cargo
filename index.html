@@ -18,7 +18,7 @@
 <p><button type="button" onclick="cargoSetPassword()">Нууц үг хадгалах</button></p>
 </div>
 <button type="button" id="authLogout" class="hide" onclick="cargoLogout()">Гарах</button>
-</section><div class="warn">⚠️ Демо админы товч нь жинхэнэ хамгаалалт биш. Энэ бол туршилтын дэлгэц. Бүртгэл зөвхөн энэ браузерт хадгалагдана. Бодит хүний нэр, утас, төлбөрийн мэдээлэл бүү оруулаарай.</div><div class="tabs"><button id="b1" class="active" onclick="tab(1)">Ачааны жагсаалт</button><button id="b2" onclick="tab(2)">+ Ачаа бүртгэх</button><button id="b3" onclick="tab(3)">Тайлан</button></div>
+</section><section id="serverPanel" class="hide" style="margin-bottom:14px"><h2>☁️ Серверийн ачаа</h2><p class="hint">Энд зөвхөн Supabase-д хадгалагдсан ачаа харагдана. Доорх туршилтын ачаануудтай холилдохгүй.</p><button type="button" onclick="cargoLoadServerShipments()">Серверээс шинэчлэх</button><div id="serverShipments" class="sub" aria-live="polite"></div></section><div class="warn">⚠️ Демо админы товч нь жинхэнэ хамгаалалт биш. Энэ бол туршилтын дэлгэц. Бүртгэл зөвхөн энэ браузерт хадгалагдана. Бодит хүний нэр, утас, төлбөрийн мэдээлэл бүү оруулаарай.</div><div class="tabs"><button id="b1" class="active" onclick="tab(1)">Ачааны жагсаалт</button><button id="b2" onclick="tab(2)">+ Ачаа бүртгэх</button><button id="b3" onclick="tab(3)">Тайлан</button></div>
 <section id="s1"><input id="search" placeholder="Ачааны код, бараагаар хайх" oninput="draw()"><div class="filters"><select id="filterStatus" onchange="draw()"><option value="">Бүх төлөв</option><option>Эрээнд хүлээн авсан</option><option>Ачилтад хүлээж байна</option><option>Машинд ачсан</option><option>Монголд ирсэн</option><option>Хүлээлгэн өгсөн</option></select><select id="filterTruck" onchange="draw()"><option value="">Бүх машин</option><option>6361</option><option>8586</option><option>1005</option><option>6124</option><option>1864</option><option>7784</option></select></div><div id="waitingSummary"></div><div id="results"></div></section><section id="s2" class="hide"><form id="form"><label>Туршилтын нэр<input name="customer" placeholder="Жишээ: Туршилт 1" required maxlength="50"></label><label>Барааны нэр<input name="goods" placeholder="Жишээ: Хайрцаг" required maxlength="100"></label><label>Ширхэг<input name="pieces" type="number" min="1" value="1" required></label><label>Жин (кг)<input name="weight" type="number" min="0" step=".01"></label><label>Эзлэхүүн (м³ / метр куб)<input name="volume" type="number" min="0" step="0.001" placeholder="Жишээ: 10.21"></label><label>Талбай (м² / метр квадрат)<input name="area" type="number" min="0" step="0.01" placeholder="Жишээ: 12.5"></label><label>Үнийн тооцооны төрөл<select name="rateType" id="rateType"><option value="manual">Гараар үнэ оруулах</option><option value="ton">Тонн (тн)</option><option value="cube">Метр куб (м³)</option><option value="square">Метр квадрат (м²)</option></select></label><label>Нэгжийн тариф (¥)<input name="unitRate" id="unitRate" type="number" min="0" step=".01" placeholder="Жишээ: 500"></label><p class="hint" id="calcPreview">Гараар тээврийн үнэ оруулна.</p><label>Тээврийн төлбөр (¥, туршилт)<input name="fee" type="number" min="0" step=".01" placeholder="0"></label><label>Төлсөн дүн (¥, туршилт)<input name="paidAmount" type="number" min="0" step=".01" value="0"></label><label>Машины дугаар<select name="truck"><option value="">Хуваарилаагүй</option><option>6361</option><option>8586</option><option>1005</option><option>6124</option><option>1864</option><option>7784</option></select></label><label>Ачааны зураг</label><div class="filters"><button type="button" onclick="document.getElementById('cameraPhoto').click()">📷 Камераар авах</button><button type="button" onclick="document.getElementById('galleryPhoto').click()">🖼️ Галлерейгаас сонгох</button></div><input id="cameraPhoto" type="file" accept="image/*" capture="environment" style="display:none" onchange="photoSelected(this,'camera')"><input id="galleryPhoto" type="file" accept="image/*" multiple style="display:none" onchange="photoSelected(this,'gallery')"><p class="hint" id="photoInfo">Зураг сонгоогүй байна (5 хүртэл зураг)</p><div id="photoPreviews" class="photo-grid"></div><button type="button" class="smallbtn" onclick="clearPhotos()">Зургуудыг арилгах</button><label>Хүрэх газар<select name="destination"><option>Өмнөговь</option><option>Улаанбаатар</option><option>Дорнод</option><option>Сүхбаатар</option></select></label><p><button class="save" style="width:100%" type="submit">Бүртгэж хадгалах</button></p></form></section><section id="s3" class="hide"><h3>Туршилтын тайлан</h3><div id="summary"></div><label>Тайлангийн машин<select id="reportTruck" onchange="renderReport()"><option value="">Бүх машин</option><option>6361</option><option>8586</option><option>1005</option><option>6124</option><option>1864</option><option>7784</option></select></label><label>Төлбөрийн төлөв<select id="reportPayment" onchange="renderReport()"><option value="">Бүгд</option><option value="unpaid">Төлөөгүй</option><option value="partial">Хэсэгчлэн</option><option value="paid">Бүрэн төлсөн</option></select></label><label>Рейсийн дугаар<input id="tripNumber" placeholder="Жишээ: 6361-20261104-01" oninput="renderReport()"></label><div class="filters"><button type="button" onclick="assignTrip()">Сонгосон машины ачааг рейст холбох</button><button type="button" onclick="markTripDeparted()">Рейс замд гарсан</button></div><p class="hint">Рейсийг зөвхөн бодитоор ачсан ачаанд холбоно. Өмнөх рейсийн ачааг дахин холбохгүй.</p><h3>📦 Дараагийн рейст ачаа сонгох</h3><p class="hint">Агуулахад байгаа ачааг сонгож, машинд хуваарилна. Энэ үйлдэл нь бодит ачилт хийгдсэн гэсэн үг биш.</p><div id="nextTripQueue"></div><p><button type="button" onclick="assignWaitingToTruck()">Сонгосон ачааг машинд хуваарилах</button></p><div id="tripHistory"></div><div id="truckManifest"></div><p><button class="save" onclick="downloadCSV()">CSV тайлан татах</button> <button type="button" onclick="backupDemo()">💾 Нөөц файл хадгалах</button> <button onclick="downloadManifest()">🚚 Ачилтын падаан CSV</button></p><p class="hint">Энэ тайлан зөвхөн энэ браузерт байгаа туршилтын бүртгэлээс гарна. Бодит санхүүгийн тайлан биш.</p></section><footer>9090 CARGO • Зөвхөн демо • Сервергүй</footer></main><dialog id="photoDialog" class="photo-dialog" onclick="if(event.target===this)this.close()"><button type="button" onclick="document.getElementById('photoDialog').close()">✕ Хаах</button><p><img id="largePhoto" class="photo-large" alt="Томруулсан ачааны зураг"></p></dialog>
 <script>
 const KEY='cargo9090_demo';let rows=[];try{rows=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
@@ -84,7 +84,9 @@ async function cargoLogin(){
   if(user.app_metadata?.cargo_role!=='admin'){cargoSession=null;return cargoMessage('Админы эрх баталгаажаагүй байна.')}
   document.getElementById('authLogin').classList.add('hide');
   document.getElementById('authLogout').classList.remove('hide');
-  cargoMessage('Admin9090 — Supabase нэвтрэлт амжилттай. Ачааны демо одоогоор серверт холбогдоогүй.');
+  cargoMessage('Admin9090 — Supabase нэвтрэлт амжилттай. Серверийн ачааг доорх тусдаа хэсгээс харна.');
+  document.getElementById('serverPanel').classList.remove('hide');
+  cargoLoadServerShipments();
  }catch(e){cargoMessage('Нэвтрэхэд алдаа: '+e.message)}
 }
 async function cargoResetRequest(){
@@ -114,11 +116,36 @@ async function cargoSetPassword(){
 async function cargoLogout(){
  if(cargoSession?.access_token){try{await cargoAuthFetch('/logout',{method:'POST',headers:{Authorization:'Bearer '+cargoSession.access_token}})}catch(e){}}
  cargoSession=null;
+ document.getElementById('serverPanel').classList.add('hide');
+ document.getElementById('serverShipments').textContent='';
  document.getElementById('authLogin').classList.remove('hide');
  document.getElementById('authLogout').classList.add('hide');
  document.getElementById('authPassword').value='';
  cargoMessage('Гарлаа.');
 }
+async function cargoLoadServerShipments(){
+ const box=document.getElementById('serverShipments');
+ if(!cargoSession?.access_token){box.textContent='Эхлээд нэвтэрнэ үү.';return}
+ box.textContent='Серверийн мэдээлэл татаж байна…';
+ try{
+  const response=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/rest/v1/cargo_shipments?select=shipment_code,goods,pieces,weight_kg,volume_m3,destination,status,fee_cny,paid_cny,received_at&order=received_at.desc&limit=100',{
+   headers:{apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+cargoSession.access_token}
+  });
+  const rows=await response.json();
+  if(!response.ok)throw Error(rows.message||'HTTP '+response.status);
+  box.replaceChildren();
+  if(!rows.length){box.textContent='Серверт одоогоор бүртгэлтэй ачаа байхгүй.';return}
+  const count=document.createElement('p');count.textContent='Серверт харагдсан ачаа: '+rows.length;box.appendChild(count);
+  for(const x of rows){
+   const div=document.createElement('div');div.className='item';
+   const title=document.createElement('strong');title.textContent=(x.shipment_code||'')+' · '+(x.goods||'');
+   const detail=document.createElement('div');detail.className='sub';
+   detail.textContent='Ширхэг: '+x.pieces+' · Жин: '+x.weight_kg+' кг · Куб: '+x.volume_m3+' м³ · '+(x.destination||'')+' · '+(x.status||'')+' · '+x.fee_cny+'¥';
+   div.append(title,detail);box.appendChild(div);
+  }
+ }catch(e){box.textContent='Серверээс ачаа уншихад алдаа: '+e.message}
+}
+
 function cargoHandleAuthRedirect(){
  const hash=new URLSearchParams(location.hash.slice(1));
  const query=new URLSearchParams(location.search);
