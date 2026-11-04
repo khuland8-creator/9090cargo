@@ -81,10 +81,12 @@ async function cargoCustomerLookup(){
  if(!res.ok)throw Error(data.error||'Хүсэлт амжилтгүй');
  result.replaceChildren();
  if(!data.shipment){result.textContent='Ийм код, утасны дугаартай ачаа олдсонгүй. Мэдээллээ шалгана уу.';return}
- const x=data.shipment;
+ const items=data.shipments||[data.shipment];
+ for(const x of items){
  const title=document.createElement('strong');title.textContent=x.shipment_code+' · '+x.goods;
  const details=document.createElement('p');details.textContent='Төлөв: '+x.status+' · Ширхэг: '+x.pieces+' · Жин: '+x.weight_kg+' кг · Очих газар: '+(x.destination||'Тодорхойгүй')+' · Машин: '+(x.truck_number||'Хуваарилаагүй');
- result.append(title,details);
+ result.append(title,details,document.createElement('hr'));
+ }
  }catch(e){result.textContent=e.message}
 }
 function cargoGenerateCode(){
