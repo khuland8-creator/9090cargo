@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="mn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>9090 CARGO — Баркодын туршилт</title><style>
+*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;background:#eef3f8;color:#12354f;margin:0;padding:16px}main{max-width:600px;margin:auto;background:white;border-radius:18px;padding:18px}h1{font-size:22px}button,label.file{display:inline-block;border:0;border-radius:10px;padding:13px 16px;margin:5px 3px;background:#174d76;color:white;font-size:16px;cursor:pointer}button:disabled{opacity:.5}.file input{display:none}#video{width:100%;background:#111;border-radius:10px;min-height:200px;max-height:390px;object-fit:contain}#output{font-size:22px;font-weight:bold;overflow-wrap:anywhere}#log{font-size:13px;white-space:pre-wrap;background:#f3f6fa;padding:12px;border-radius:8px}a{color:#1766aa}</style></head><body><main>
+<h1>📦 9090 CARGO — Баркодын туршилт</h1><p>Хувилбар: <b>SCAN-TEST-01</b>. Энд ачаа бүртгэхгүй, зөвхөн баркодын дугаарыг танина.</p>
+<button id="start">📷 Камер нээх</button><button id="stop">⏹ Зогсоох</button>
+<label class="file">🖼️ Зураг сонгох<input id="photo" type="file" accept="image/*"></label>
+<video id="video" playsinline autoplay muted></video>
+<p id="status" role="status">Камер нээх товчийг дарна уу.</p>
+<div id="output"></div><button id="copy" hidden>Дугаар хуулах</button>
+<details open><summary>Оношилгоо</summary><pre id="log"></pre></details>
+<p><a href="./">← Үндсэн апп руу буцах</a></p></main>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+<script>
+const video=document.getElementById('video'),status=document.getElementById('status'),log=document.getElementById('log'),output=document.getElementById('output');
+let reader=null,frames=0,lastError='',running=false;
+function note(s){log.textContent=new Date().toLocaleTimeString()+' '+s+'\n'+log.textContent.slice(0,2000)}
+function stop(){running=false;if(reader){try{reader.reset()}catch(e){}reader=null}if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null}}
+function found(v){if(!v)return;output.textContent=v;document.getElementById('copy').hidden=false;status.textContent='✅ Баркод танигдлаа';note('FOUND '+v);stop()}
+function newReader(){const hints=new Map();hints.set(ZXing.DecodeHintType.TRY_HARDER,true);hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.CODE_93,ZXing.BarcodeFormat.ITF,ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.QR_CODE]);return new ZXing.BrowserMultiFormatReader(hints,200)}
+document.getElementById('start').onclick=async()=>{
+ stop();frames=0;lastError='';output.textContent='';
+ if(!window.ZXing){status.textContent='⚠️ ZXing сан ачаалагдсангүй';note('ZXing unavailable');return}
+ reader=newReader();running=true;status.textContent='Камер эхлүүлж байна…';
+ try{
+ const devices=await ZXing.BrowserCodeReader.listVideoInputDevices();note('Camera devices: '+devices.length);
+ const back=devices.find(x=>/back|rear|environment/i.test(x.label));
+ note('Selected: '+(back?.label||'automatic'));
+ await reader.decodeFromVideoDevice(back?.deviceId||null,video,(result,error)=>{
+ if(!running)return;
+ frames++;
+ if(result){found(result.getText());return}
+ if(error&&error.name!=='NotFoundException'&&error.name!== 'ChecksumException'&&error.name!=='FormatException'){lastError=error.name+': '+error.message}
+ if(frames%20===0){status.textContent='Камер ажиллаж байна. Унших оролдлого: '+frames;note('Frames='+frames+' video='+video.videoWidth+'x'+video.videoHeight+' error='+lastError)}
+ });
+ status.textContent='Камер нээгдлээ. Баркодыг бүтнээр нь харуулна уу.';
+ }catch(e){status.textContent='⚠️ '+e.message;note('Camera error '+e);stop()}
+};
+document.getElementById('stop').onclick=()=>{stop();status.textContent='Камер зогссон'};
+document.getElementById('copy').onclick=()=>navigator.clipboard.writeText(output.textContent).then(()=>{status.textContent='Дугаар хуулагдлаа'});
+document.getElementById('photo').onchange=async e=>{
+ const file=e.target.files?.[0];if(!file)return;stop();output.textContent='';status.textContent='Зургийг шалгаж байна…';
+ if(!window.ZXing){status.textContent='ZXing сан ачаалагдсангүй';return}
+ try{
+ const bitmap=await createImageBitmap(file);const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+ for(const deg of [0,90,270,180]){
+ const scale=Math.min(1,2000/Math.max(bitmap.width,bitmap.height));const w=Math.round(bitmap.width*scale),h=Math.round(bitmap.height*scale),side=deg===90||deg===270;
+ canvas.width=side?h:w;canvas.height=side?w:h;ctx.save();ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate(deg*Math.PI/180);ctx.drawImage(bitmap,-w/2,-h/2,w,h);ctx.restore();
+ const url=canvas.toDataURL('image/png');const img=new Image();img.src=url;await img.decode();
+ const r=newReader();try{const result=await r.decodeFromImageElement(img);found(result.getText());break}catch(err){note('Photo '+deg+'°: '+err.name)}finally{r.reset()}
+ }
+ if(!output.textContent)status.textContent='⚠️ Зургийн 4 чиглэлээс баркод олдсонгүй';
+ bitmap.close();
+ }catch(err){status.textContent='⚠️ '+err.message;note('Photo error '+err)}finally{e.target.value=''}
+};
+note('Version SCAN-TEST-01; ZXing='+Boolean(window.ZXing)+'; secure='+window.isSecureContext);
+</script></body></html>
