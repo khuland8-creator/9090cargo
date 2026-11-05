@@ -307,7 +307,7 @@ async function cargoLoadPrivatePhoto(path,img){
 let cargoKuaiScanner=null,cargoKuaiStarting=false,cargoKuaiZxingLoader=null,cargoKuaiScanErrors=0,cargoKuaiScanStarted=0;
 function cargoKuaiStopCamera(){
  const scanner=cargoKuaiScanner;cargoKuaiScanner=null;
- if(scanner){try{const stopped=scanner.stop();if(stopped?.catch)stopped.catch(()=>{});}catch(e){}try{scanner.reset?.()}catch(e){}}
+ if(scanner){try{const stopped=scanner.stop();if(stopped?.then)stopped.then(()=>scanner.clear?.()).catch(()=>{});else scanner.clear?.()}catch(e){}}
  const video=document.getElementById('kuaiZxingVideo');
  if(video){try{video.pause()}catch(e){}if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null}}
  document.getElementById('kuaiCameraBox').style.display='none';
@@ -348,12 +348,13 @@ async function cargoKuaiStartCamera(){
   await cargoKuaiLoadScanner();
   const holder=document.getElementById('kuaiScanner');holder.replaceChildren();
   document.getElementById('kuaiCameraBox').style.display='block';
-  const formats=['CODE_128','CODE_39','CODE_93','EAN_13','EAN_8','ITF','QR_CODE'].map(x=>Html5QrcodeSupportedFormats[x]).filter(x=>x!==undefined);
+  const formats=[Html5QrcodeSupportedFormats.CODE_128];
   const scanner=new Html5Qrcode('kuaiScanner',{formatsToSupport:formats,useBarCodeDetectorIfSupported:true,verbose:false});
   cargoKuaiScanner=scanner;
   await scanner.start({facingMode:'environment'},{
-   fps:10,aspectRatio:1.777778,disableFlip:true,
-   videoConstraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}
+   fps:12,disableFlip:true,
+   qrbox:(vw,vh)=>({width:Math.max(160,Math.floor(vw*0.92)),height:Math.max(85,Math.min(Math.floor(vh*0.42),160))}),
+   videoConstraints:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}
   },decoded=>{
    if(cargoKuaiScanner!==scanner)return;
    const value=String(decoded||'').trim();
@@ -364,7 +365,7 @@ async function cargoKuaiStartCamera(){
   },()=>{});
   document.getElementById('kuaiCameraButton').style.display='none';
   document.getElementById('kuaiStopButton').style.display='';
-  msg.textContent='📷 Шинэ уншигч ажиллаж байна. Баркодыг хэвтээгээр нь бүтнээр нь кадрт харуулаарай.';
+  msg.textContent='📷 Трак кодын Code 128 уншигч ажиллаж байна. Зураасан кодыг хэвтээгээр нь хүрээн дотор бүтнээр нь байрлуулна уу.';
  }catch(e){cargoKuaiStopCamera();msg.textContent='⚠️ Камер ажилласангүй: '+(e?.message||String(e))}
  finally{cargoKuaiStarting=false;button.disabled=false}
 }
