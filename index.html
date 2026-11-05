@@ -334,10 +334,10 @@ async function cargoKuaiStartCamera(){
  try{
   await cargoKuaiLoadScanner();
   document.getElementById('kuaiCameraBox').style.display='block';
-  const formats=['CODE_128','CODE_39','EAN_13','EAN_8','ITF','QR_CODE','DATA_MATRIX','PDF_417'].map(k=>window.Html5QrcodeSupportedFormats[k]).filter(x=>x!==undefined);
-  const scanner=new Html5Qrcode('kuaiScanner',{formatsToSupport:formats,verbose:false});
+  const formats=['CODE_128','CODE_39','CODE_93','EAN_13','EAN_8','ITF','UPC_A','UPC_E','CODABAR','QR_CODE','DATA_MATRIX','PDF_417'].map(k=>window.Html5QrcodeSupportedFormats[k]).filter(x=>x!==undefined);
+  const scanner=new Html5Qrcode('kuaiScanner',{formatsToSupport:formats,useBarCodeDetectorIfSupported:true,verbose:false});
   cargoKuaiScanner=scanner;
-  await scanner.start({facingMode:'environment'},{fps:10,qrbox:(w,h)=>({width:Math.max(120,Math.floor(w*0.85)),height:Math.max(100,Math.floor(h*0.55))})},value=>{
+  await scanner.start({facingMode:'environment'},{fps:15,aspectRatio:1.777778,disableFlip:true,videoConstraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},qrbox:(w,h)=>({width:Math.max(100,Math.floor(w*0.95)),height:Math.max(85,Math.floor(h*0.82))})},value=>{
    if(!value||value.trim().length<5)return;
    document.getElementById('kuaiCode').value=value.trim();
    cargoKuaiStopCamera();
@@ -345,7 +345,7 @@ async function cargoKuaiStartCamera(){
   },()=>{});
   document.getElementById('kuaiCameraButton').style.display='none';
   document.getElementById('kuaiStopButton').style.display='';
-  msg.textContent='Камераа баркод руу чиглүүлнэ үү.';
+  msg.textContent='Урт зураасан баркодыг бүтнээр нь хүрээнд багтааж, 10–20 см зайтай тогтвортой барина уу.';
  }catch(e){
   cargoKuaiStopCamera();
   msg.textContent='⚠️ Камер нээгдсэнгүй: '+(e?.message||String(e))+'. iPhone дээр Safari-ийн камерын зөвшөөрлийг шалгана уу.';
