@@ -326,6 +326,7 @@ function cargoFilterServerList(){
  let shown=0;
  document.querySelectorAll('#serverShipments .item').forEach(el=>{
   const x=cargoServerRows.find(row=>String(row.id)===el.dataset.shipmentId);
+  if(cargoSession?.staffRole!=='admin'){el.classList.remove('hide');shown++;return;}
   const matchesStatus=!status||(status==='waiting'?['received','pending','waiting'].includes(x?.status):status==='loaded'?['loaded','customs'].includes(x?.status):x?.status===status);
   const matchesTruck=!truck||(truck==='__unassigned__'?!String(x?.truck_number||'').trim():String(x?.truck_number||'').trim()===truck);
   const visible=(!q||el.dataset.search.includes(q))&&matchesStatus&&matchesTruck;
