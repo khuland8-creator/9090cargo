@@ -304,10 +304,12 @@ async function cargoLogout(){cargoKuaiStopCamera();
 async function cargoLoadPrivatePhoto(path,img){
  try{const res=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/storage/v1/object/sign/cargo-photos/'+path,{method:'POST',headers:{apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+cargoSession.access_token,'Content-Type':'application/json'},body:JSON.stringify({expiresIn:600})});if(!res.ok)throw Error('Зургийн эрх');const data=await res.json();img.src='https://hctnhiiytzhlphalwupl.supabase.co/storage/v1'+data.signedURL}catch(e){img.alt='Зургийг уншиж чадсангүй'}
 }
-let cargoKuaiScanner=null,cargoKuaiStarting=false;
+let cargoKuaiScanner=null,cargoKuaiStarting=false,cargoKuaiZxingLoader=null;
 function cargoKuaiStopCamera(){
  const scanner=cargoKuaiScanner;cargoKuaiScanner=null;
- if(scanner){Promise.resolve(scanner.stop()).catch(()=>{}).then(()=>{try{scanner.clear()}catch(e){}})}
+ if(scanner){try{scanner.stop()}catch(e){}try{scanner.reset?.()}catch(e){}}
+ const video=document.getElementById('kuaiZxingVideo');
+ if(video){try{video.pause()}catch(e){}if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null}}
  document.getElementById('kuaiCameraBox').style.display='none';
  document.getElementById('kuaiCameraButton').style.display='';
  document.getElementById('kuaiStopButton').style.display='none';
@@ -319,37 +321,56 @@ function cargoKuaiLoadScanner(){
   const script=document.createElement('script');
   script.src='https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js';
   script.onload=()=>window.Html5Qrcode?resolve():reject(Error('Сканнер ачаалагдсангүй'));
-  script.onerror=()=>reject(Error('Сканнерын сан татагдсангүй. Интернэтээ шалгана уу.'));
+  script.onerror=()=>reject(Error('Сканнерын сан татагдсангүй.'));
   document.head.appendChild(script);
  }).catch(e=>{window.cargoKuaiScannerLoader=null;throw e});
  return window.cargoKuaiScannerLoader;
 }
+function cargoKuaiLoadZxing(){
+ if(window.ZXing?.BrowserMultiFormatReader)return Promise.resolve();
+ if(cargoKuaiZxingLoader)return cargoKuaiZxingLoader;
+ cargoKuaiZxingLoader=new Promise((resolve,reject)=>{
+  const script=document.createElement('script');
+  script.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+  script.onload=()=>window.ZXing?.BrowserMultiFormatReader?resolve():reject(Error('ZXing уншигч ачаалагдсангүй'));
+  script.onerror=()=>reject(Error('ZXing сан татагдсангүй. Интернэт холболтоо шалгана уу.'));
+  document.head.appendChild(script);
+ }).catch(e=>{cargoKuaiZxingLoader=null;throw e});
+ return cargoKuaiZxingLoader;
+}
 async function cargoKuaiStartCamera(){
  const msg=document.getElementById('kuaiMessage');
  if(cargoKuaiStarting||cargoKuaiScanner)return;
- if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){msg.textContent='Камерын зөвшөөрөл авах боломжгүй. Safari эсвэл Chrome дээр HTTPS хаягаар нээнэ үү.';return}
+ if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){msg.textContent='Safari дээр HTTPS хаягаар нээгээд камерын зөвшөөрөл өгнө үү.';return}
  cargoKuaiStarting=true;
  const button=document.getElementById('kuaiCameraButton');button.disabled=true;
- msg.textContent='Камерын сканнер ачаалж байна…';
+ msg.textContent='Шинэ ZXing баркод уншигч ачаалж байна…';
  try{
-  await cargoKuaiLoadScanner();
+  await cargoKuaiLoadZxing();
+  const holder=document.getElementById('kuaiScanner');
+  holder.replaceChildren();
+  const video=document.createElement('video');video.id='kuaiZxingVideo';
+  video.setAttribute('playsinline','');video.muted=true;video.autoplay=true;
+  video.style.cssText='width:100%;min-height:220px;max-height:360px;object-fit:contain;background:#111;border-radius:10px';
+  holder.appendChild(video);
   document.getElementById('kuaiCameraBox').style.display='block';
-  const formats=['CODE_128','CODE_39','CODE_93','EAN_13','EAN_8','ITF','UPC_A','UPC_E','CODABAR','QR_CODE','DATA_MATRIX','PDF_417'].map(k=>window.Html5QrcodeSupportedFormats[k]).filter(x=>x!==undefined);
-  const scanner=new Html5Qrcode('kuaiScanner',{formatsToSupport:formats,useBarCodeDetectorIfSupported:false,verbose:false});
-  cargoKuaiScanner=scanner;
-  await scanner.start({facingMode:'environment'},{fps:12,aspectRatio:1.777778,disableFlip:true,videoConstraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}},value=>{
-   if(!value||value.trim().length<5)return;
-   document.getElementById('kuaiCode').value=value.trim();
+  const hints=new Map();
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.CODE_93,ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.ITF,ZXing.BarcodeFormat.QR_CODE]);
+  hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
+  const reader=new ZXing.BrowserMultiFormatReader(hints,250);
+  cargoKuaiScanner=reader;
+  await reader.decodeFromVideoDevice(null,video,(result,error)=>{
+   if(!result||!cargoKuaiScanner)return;
+   const value=result.getText().trim();if(value.length<5)return;
+   document.getElementById('kuaiCode').value=value;
    cargoKuaiStopCamera();
-   msg.textContent='✅ Баркод танигдлаа. Дугаарыг шалгаад хадгална уу.';
-  },()=>{});
+   msg.textContent='✅ Баркод танигдлаа: '+value+'. Шалгаад хадгална уу.';
+  });
   document.getElementById('kuaiCameraButton').style.display='none';
   document.getElementById('kuaiStopButton').style.display='';
-  msg.textContent='Урт зураасан баркодыг бүтнээр нь хүрээнд багтааж, 10–20 см зайтай тогтвортой барина уу.';
- }catch(e){
-  cargoKuaiStopCamera();
-  msg.textContent='⚠️ Камер нээгдсэнгүй: '+(e?.message||String(e))+'. iPhone дээр Safari-ийн камерын зөвшөөрлийг шалгана уу.';
- }finally{cargoKuaiStarting=false;button.disabled=false}
+  msg.textContent='Камераа шошгоны зураасан баркод руу чиглүүлнэ үү. Баркодыг бүтнээр нь харагдуулна.';
+ }catch(e){cargoKuaiStopCamera();msg.textContent='⚠️ Камерын уншигч ажилласангүй: '+(e?.message||String(e))}
+ finally{cargoKuaiStarting=false;button.disabled=false}
 }
 async function cargoKuaiScanImage(input){
  const msg=document.getElementById('kuaiMessage'),file=input.files?.[0];
