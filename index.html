@@ -307,7 +307,7 @@ async function cargoLoadPrivatePhoto(path,img){
 let cargoKuaiScanner=null,cargoKuaiStarting=false,cargoKuaiZxingLoader=null,cargoKuaiScanErrors=0,cargoKuaiScanStarted=0;
 function cargoKuaiStopCamera(){
  const scanner=cargoKuaiScanner;cargoKuaiScanner=null;
- if(scanner){try{scanner.stop()}catch(e){}try{scanner.reset?.()}catch(e){}}
+ if(scanner){try{const stopped=scanner.stop();if(stopped?.catch)stopped.catch(()=>{});}catch(e){}try{scanner.reset?.()}catch(e){}}
  const video=document.getElementById('kuaiZxingVideo');
  if(video){try{video.pause()}catch(e){}if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null}}
  document.getElementById('kuaiCameraBox').style.display='none';
@@ -339,39 +339,33 @@ function cargoKuaiLoadZxing(){
  return cargoKuaiZxingLoader;
 }
 async function cargoKuaiStartCamera(){
- const msg=document.getElementById('kuaiMessage');
+ const msg=document.getElementById('kuaiMessage'),button=document.getElementById('kuaiCameraButton');
  if(cargoKuaiStarting||cargoKuaiScanner)return;
  if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){msg.textContent='Safari дээр HTTPS хаягаар нээгээд камерын зөвшөөрөл өгнө үү.';return}
- cargoKuaiStarting=true;cargoKuaiScanErrors=0;cargoKuaiScanStarted=Date.now();
- const button=document.getElementById('kuaiCameraButton');button.disabled=true;
- msg.textContent='Утасны арын камерыг өндөр нягтралтайгаар нээж байна…';
+ cargoKuaiStarting=true;button.disabled=true;
+ msg.textContent='Утасны камерын шинэ уншигчийг ачаалж байна…';
  try{
-  await cargoKuaiLoadZxing();
-  const holder=document.getElementById('kuaiScanner');
-  holder.replaceChildren();
-  const video=document.createElement('video');video.id='kuaiZxingVideo';
-  video.setAttribute('playsinline','');video.muted=true;video.autoplay=true;
-  video.style.cssText='width:100%;min-height:220px;max-height:360px;object-fit:contain;background:#111;border-radius:10px';
-  holder.appendChild(video);
+  await cargoKuaiLoadScanner();
+  const holder=document.getElementById('kuaiScanner');holder.replaceChildren();
   document.getElementById('kuaiCameraBox').style.display='block';
-  const hints=new Map();
-  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.CODE_93,ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.ITF,ZXing.BarcodeFormat.QR_CODE]);
-  hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
-  const reader=new ZXing.BrowserMultiFormatReader(hints,250);
-  cargoKuaiScanner=reader;
-  await reader.decodeFromConstraints({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30}}},video,(result,error)=>{
-   if(error){cargoKuaiScanErrors++;if(cargoKuaiScanErrors%30===0){const w=video.videoWidth,h=video.videoHeight;msg.textContent='🔎 Камер ажиллаж байна ('+w+'×'+h+'). Уншилтын оролдлого: '+cargoKuaiScanErrors+'. Утсаа хөндлөн эргүүлж, баркодын бүх зураасыг кадрт багтаана уу.';}return;}
-   if(!result||!cargoKuaiScanner)return;
-   const value=result.getText().trim();if(value.length<5)return;
+  const formats=['CODE_128','CODE_39','CODE_93','EAN_13','EAN_8','ITF','QR_CODE'].map(x=>Html5QrcodeSupportedFormats[x]).filter(x=>x!==undefined);
+  const scanner=new Html5Qrcode('kuaiScanner',{formatsToSupport:formats,useBarCodeDetectorIfSupported:true,verbose:false});
+  cargoKuaiScanner=scanner;
+  await scanner.start({facingMode:'environment'},{
+   fps:10,aspectRatio:1.777778,disableFlip:true,
+   videoConstraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}
+  },decoded=>{
+   if(cargoKuaiScanner!==scanner)return;
+   const value=String(decoded||'').trim();
+   if(value.length<5)return;
    document.getElementById('kuaiCode').value=value;
    cargoKuaiStopCamera();
    msg.textContent='✅ Баркод танигдлаа: '+value+'. Шалгаад хадгална уу.';
-  });
+  },()=>{});
   document.getElementById('kuaiCameraButton').style.display='none';
   document.getElementById('kuaiStopButton').style.display='';
-  const track=video.srcObject?.getVideoTracks()?.[0];const settings=track?.getSettings?.()||{};
-  msg.textContent='📷 Арын камер нээгдлээ ('+(settings.width||video.videoWidth)+'×'+(settings.height||video.videoHeight)+'). Баркодыг гэрэл сайтай газар бүтнээр нь харуулна уу.';
- }catch(e){cargoKuaiStopCamera();msg.textContent='⚠️ Камерын уншигч ажилласангүй: '+(e?.message||String(e))}
+  msg.textContent='📷 Шинэ уншигч ажиллаж байна. Баркодыг хэвтээгээр нь бүтнээр нь кадрт харуулаарай.';
+ }catch(e){cargoKuaiStopCamera();msg.textContent='⚠️ Камер ажилласангүй: '+(e?.message||String(e))}
  finally{cargoKuaiStarting=false;button.disabled=false}
 }
 async function cargoKuaiScanImage(input){
