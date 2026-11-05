@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="mn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>9090 CARGO — Баркодын туршилт</title><style>
 *{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;background:#eef3f8;color:#12354f;margin:0;padding:16px}main{max-width:600px;margin:auto;background:white;border-radius:18px;padding:18px}h1{font-size:22px}button,label.file{display:inline-block;border:0;border-radius:10px;padding:13px 16px;margin:5px 3px;background:#174d76;color:white;font-size:16px;cursor:pointer}button:disabled{opacity:.5}.file input{display:none}#video{width:100%;background:#111;border-radius:10px;min-height:200px;max-height:390px;object-fit:contain}#output{font-size:22px;font-weight:bold;overflow-wrap:anywhere}#log{font-size:13px;white-space:pre-wrap;background:#f3f6fa;padding:12px;border-radius:8px}a{color:#1766aa}</style></head><body><main>
-<h1>📦 9090 CARGO — Баркодын туршилт</h1><p>Хувилбар: <b>SCAN-TEST-01</b>. Энд ачаа бүртгэхгүй, зөвхөн баркодын дугаарыг танина.</p>
+<h1>📦 9090 CARGO — Баркодын туршилт</h1><p>Хувилбар: <b>SCAN-TEST-02</b>. Энд ачаа бүртгэхгүй, зөвхөн баркодын дугаарыг танина.</p>
 <button id="start">📷 Камер нээх</button><button id="stop">⏹ Зогсоох</button>
 <label class="file">🖼️ Зураг сонгох<input id="photo" type="file" accept="image/*"></label>
 <video id="video" playsinline autoplay muted></video>
@@ -22,8 +22,8 @@ document.getElementById('start').onclick=async()=>{
  if(!window.ZXing){status.textContent='⚠️ ZXing сан ачаалагдсангүй';note('ZXing unavailable');return}
  reader=newReader();running=true;status.textContent='Камер эхлүүлж байна…';
  try{
- const devices=await ZXing.BrowserCodeReader.listVideoInputDevices();note('Camera devices: '+devices.length);
- const back=devices.find(x=>/back|rear|environment/i.test(x.label));
+ const devices=await reader.listVideoInputDevices();note('Camera devices: '+devices.length);
+ const back=devices.find(x=>/back|rear|environment/i.test(x.label))||devices[devices.length-1];
  note('Selected: '+(back?.label||'automatic'));
  await reader.decodeFromVideoDevice(back?.deviceId||null,video,(result,error)=>{
  if(!running)return;
@@ -52,5 +52,5 @@ document.getElementById('photo').onchange=async e=>{
  bitmap.close();
  }catch(err){status.textContent='⚠️ '+err.message;note('Photo error '+err)}finally{e.target.value=''}
 };
-note('Version SCAN-TEST-01; ZXing='+Boolean(window.ZXing)+'; secure='+window.isSecureContext);
+note('Version SCAN-TEST-02; ZXing='+Boolean(window.ZXing)+'; secure='+window.isSecureContext);
 </script></body></html>
