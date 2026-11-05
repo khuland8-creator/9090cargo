@@ -352,19 +352,42 @@ async function cargoKuaiStartCamera(){
  }finally{cargoKuaiStarting=false;button.disabled=false}
 }
 async function cargoKuaiScanImage(input){
- const msg=document.getElementById('kuaiMessage');
- const file=input.files?.[0];if(!file)return;
- msg.textContent='Зураг дээрх баркодыг таньж байна…';
+ const msg=document.getElementById('kuaiMessage'),file=input.files?.[0];
+ if(!file)return;
+ msg.textContent='Зураг дээрх баркодыг эргүүлж шалгаж байна…';
+ let scanner=null,bitmap=null;
  try{
   await cargoKuaiLoadScanner();
   cargoKuaiStopCamera();
-  const scanner=new Html5Qrcode('kuaiScanner',{formatsToSupport:[Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.CODE_93,Html5QrcodeSupportedFormats.ITF,Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.QR_CODE],useBarCodeDetectorIfSupported:false,verbose:false});
-  const value=await scanner.scanFile(file,true);
+  bitmap=await createImageBitmap(file,{imageOrientation:'from-image'});
+  const formats=['CODE_128','CODE_39','CODE_93','ITF','EAN_13','EAN_8','QR_CODE','PDF_417'].map(k=>Html5QrcodeSupportedFormats[k]).filter(x=>x!==undefined);
+  scanner=new Html5Qrcode('kuaiScanner',{formatsToSupport:formats,useBarCodeDetectorIfSupported:false,verbose:false});
+  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+  let value=null;
+  for(const degrees of [0,90,270,180]){
+   const sideways=degrees===90||degrees===270;
+   const scale=Math.min(1,1800/Math.max(bitmap.width,bitmap.height));
+   const w=Math.round(bitmap.width*scale),h=Math.round(bitmap.height*scale);
+   canvas.width=sideways?h:w;canvas.height=sideways?w:h;
+   ctx.save();ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate(degrees*Math.PI/180);
+   ctx.drawImage(bitmap,-w/2,-h/2,w,h);ctx.restore();
+   const imageBlob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   if(!imageBlob)continue;
+   try{
+    value=await scanner.scanFile(new File([imageBlob],'barcode.png',{type:'image/png'}),false);
+    if(value)break;
+   }catch(e){}
+  }
+  if(!value)throw Error('No barcode found');
   document.getElementById('kuaiCode').value=value.trim();
-  msg.textContent='✅ Зургаас баркод танигдлаа. Дугаарыг шалгаад хадгална уу.';
-  try{scanner.clear()}catch(e){}
- }catch(e){msg.textContent='⚠️ Зургаас баркод танигдсангүй. Баркодыг ойроос, бүтнээр нь тод аваад дахин оролдоно уу.'}
- finally{input.value=''}
+  msg.textContent='✅ Баркод танигдлаа: '+value.trim()+'. Дугаарыг шалгаад хадгална уу.';
+ }catch(e){
+  msg.textContent='⚠️ Зургаас баркод танигдсангүй. Баркодын зураас болон доорх дугаарыг бүтнээр нь ойроос тод аваад дахин оролдоно уу.';
+ }finally{
+  try{scanner?.clear()}catch(e){}
+  try{bitmap?.close()}catch(e){}
+  input.value='';
+ }
 }
 async function cargoKuaiSave(){
  const msg=document.getElementById('kuaiMessage'),button=document.getElementById('kuaiSave');
