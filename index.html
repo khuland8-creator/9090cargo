@@ -304,7 +304,7 @@ async function cargoLogout(){cargoKuaiStopCamera();
 async function cargoLoadPrivatePhoto(path,img){
  try{const res=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/storage/v1/object/sign/cargo-photos/'+path,{method:'POST',headers:{apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+cargoSession.access_token,'Content-Type':'application/json'},body:JSON.stringify({expiresIn:600})});if(!res.ok)throw Error('Зургийн эрх');const data=await res.json();img.src='https://hctnhiiytzhlphalwupl.supabase.co/storage/v1'+data.signedURL}catch(e){img.alt='Зургийг уншиж чадсангүй'}
 }
-let cargoKuaiScanner=null,cargoKuaiStarting=false,cargoKuaiZxingLoader=null;
+let cargoKuaiScanner=null,cargoKuaiStarting=false,cargoKuaiZxingLoader=null,cargoKuaiScanErrors=0,cargoKuaiScanStarted=0;
 function cargoKuaiStopCamera(){
  const scanner=cargoKuaiScanner;cargoKuaiScanner=null;
  if(scanner){try{scanner.stop()}catch(e){}try{scanner.reset?.()}catch(e){}}
@@ -342,7 +342,7 @@ async function cargoKuaiStartCamera(){
  const msg=document.getElementById('kuaiMessage');
  if(cargoKuaiStarting||cargoKuaiScanner)return;
  if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){msg.textContent='Safari дээр HTTPS хаягаар нээгээд камерын зөвшөөрөл өгнө үү.';return}
- cargoKuaiStarting=true;
+ cargoKuaiStarting=true;cargoKuaiScanErrors=0;cargoKuaiScanStarted=Date.now();
  const button=document.getElementById('kuaiCameraButton');button.disabled=true;
  msg.textContent='Шинэ ZXing баркод уншигч ачаалж байна…';
  try{
@@ -360,6 +360,7 @@ async function cargoKuaiStartCamera(){
   const reader=new ZXing.BrowserMultiFormatReader(hints,250);
   cargoKuaiScanner=reader;
   await reader.decodeFromVideoDevice(null,video,(result,error)=>{
+   if(error){cargoKuaiScanErrors++;if(cargoKuaiScanErrors%30===0){const w=video.videoWidth,h=video.videoHeight;msg.textContent='🔎 Камер ажиллаж байна ('+w+'×'+h+'). Уншилтын оролдлого: '+cargoKuaiScanErrors+'. Утсаа хөндлөн эргүүлж, баркодын бүх зураасыг кадрт багтаана уу.';}return;}
    if(!result||!cargoKuaiScanner)return;
    const value=result.getText().trim();if(value.length<5)return;
    document.getElementById('kuaiCode').value=value;
@@ -368,7 +369,7 @@ async function cargoKuaiStartCamera(){
   });
   document.getElementById('kuaiCameraButton').style.display='none';
   document.getElementById('kuaiStopButton').style.display='';
-  msg.textContent='Камераа шошгоны зураасан баркод руу чиглүүлнэ үү. Баркодыг бүтнээр нь харагдуулна.';
+  msg.textContent='🔎 ZXing идэвхтэй. Утсаа хөндлөн бариад зураасан баркодыг бүтнээр нь харуулна уу. Унших оролдлогын тоо удахгүй харагдана.';
  }catch(e){cargoKuaiStopCamera();msg.textContent='⚠️ Камерын уншигч ажилласангүй: '+(e?.message||String(e))}
  finally{cargoKuaiStarting=false;button.disabled=false}
 }
