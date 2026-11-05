@@ -412,18 +412,56 @@ async function cargoKuaiSave(){
   cargoKuaiReport();
  }catch(e){msg.textContent='⚠️ '+e.message}finally{button.disabled=false}
 }
+let cargoKuaiMissingRows=[];
+function cargoKuaiRenderMissing(){
+ const holder=document.getElementById('kuaiMissingList');if(!holder)return;
+ holder.replaceChildren();
+ const term=(document.getElementById('kuaiMissingSearch')?.value||'').trim().toLowerCase();
+ const filtered=cargoKuaiMissingRows.filter(x=>String(x.tracking_number).toLowerCase().includes(term)||String(x.customer_phone||'').includes(term));
+ const title=document.createElement('p');title.textContent='Хараахан уншуулаагүй жагсаалт: '+filtered.length+' / '+cargoKuaiMissingRows.length;holder.appendChild(title);
+ for(const x of filtered.slice(0,150)){
+  const line=document.createElement('div');line.style.cssText='border-bottom:1px solid #ddd;padding:8px 0;overflow-wrap:anywhere';
+  const strong=document.createElement('strong');strong.textContent=x.tracking_number;line.appendChild(strong);
+  const details=document.createElement('div');details.style.fontSize='13px';details.textContent=(x.customer_phone||'Утасгүй')+' · Эрээнд: '+new Date(x.received_at).toLocaleString('mn-MN');line.appendChild(details);holder.appendChild(line);
+ }
+ if(filtered.length>150){const note=document.createElement('p');note.textContent='Эхний 150 мөрийг харуулж байна. Бүх жагсаалтыг CSV татна уу.';holder.appendChild(note)}
+}
+function cargoKuaiDownloadMissing(){
+ const lines=[['Баркод','Утас','Эрээнд бүртгэсэн','Төлөв'],...cargoKuaiMissingRows.map(x=>[x.tracking_number,x.customer_phone||'',x.received_at,'Өмнөговьд уншуулаагүй'])];
+ const csv='\uFEFF'+lines.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+ const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+ const a=document.createElement('a');a.href=url;a.download='9090-kuai-di-not-arrived.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 async function cargoKuaiReport(){
  if(!cargoSession?.access_token)return;
- const box=document.getElementById('kuaiReport');box.textContent='Тулгаж байна…';
+ const box=document.getElementById('kuaiReport');box.replaceChildren();
+ const loading=document.createElement('p');loading.textContent='Тулгаж байна…';box.appendChild(loading);
  try{
   const headers={apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+cargoSession.access_token,Prefer:'count=exact'};
-  const base='https://hctnhiiytzhlphalwupl.supabase.co/rest/v1/cargo_kuai_di?select=id';
-  const total=await fetch(base,{method:'HEAD',headers});
-  const arrived=await fetch(base+'&arrived_at=not.is.null',{method:'HEAD',headers});
+  const base='https://hctnhiiytzhlphalwupl.supabase.co/rest/v1/cargo_kuai_di';
+  const total=await fetch(base+'?select=id',{method:'HEAD',headers});
+  const arrived=await fetch(base+'?select=id&arrived_at=not.is.null',{method:'HEAD',headers});
   if(!total.ok||!arrived.ok)throw Error('Тайлан уншигдсангүй');
   const n=r=>Number((r.headers.get('content-range')||'0/0').split('/')[1])||0;
-  box.textContent='Эрээнд бүртгэсэн: '+n(total)+' · Өмнөговьд ирсэн: '+n(arrived)+' · Хараахан уншуулаагүй: '+(n(total)-n(arrived))+'. Аль машинд ачсаныг баталгаажуулаагүй тул машины дутуу гэж үзэхгүй.';
- }catch(e){box.textContent='Алдаа: '+e.message}
+  box.replaceChildren();
+  const summary=document.createElement('p');
+  summary.textContent='📦 Эрээнд бүртгэсэн: '+n(total)+' · 📍 Өмнөговьд ирсэн: '+n(arrived)+' · ⏳ Хараахан уншуулаагүй: '+(n(total)-n(arrived));
+  box.appendChild(summary);
+  const caution=document.createElement('p');caution.className='hint';caution.textContent='Анхаар: Уншуулаагүй куайди нь заавал тухайн машинаас дутсан гэсэн үг биш.';box.appendChild(caution);
+  if(cargoSession.staffRole!=='admin')return;
+  const pending=n(total)-n(arrived);
+  if(pending>5000){const warn=document.createElement('p');warn.textContent='5000-аас олон куайди байгаа тул дэлгэрэнгүй жагсаалтыг хэсэгчлэн татах шаардлагатай.';box.appendChild(warn);return}
+  cargoKuaiMissingRows=[];
+  for(let offset=0;offset<pending;offset+=500){
+   const res=await fetch(base+'?select=tracking_number,customer_phone,received_at&arrived_at=is.null&order=received_at.asc&limit=500&offset='+offset,{headers});
+   if(!res.ok)throw Error('Дэлгэрэнгүй жагсаалт уншигдсангүй');
+   const rows=await res.json();cargoKuaiMissingRows.push(...rows);if(rows.length<500)break;
+  }
+  const search=document.createElement('input');search.id='kuaiMissingSearch';search.placeholder='Баркод эсвэл утсаар хайх';search.oninput=cargoKuaiRenderMissing;box.appendChild(search);
+  const download=document.createElement('button');download.type='button';download.textContent='⬇️ Дутуу жагсаалт CSV татах';download.onclick=cargoKuaiDownloadMissing;box.appendChild(download);
+  const list=document.createElement('div');list.id='kuaiMissingList';list.style.cssText='max-height:350px;overflow:auto;margin-top:10px';box.appendChild(list);
+  cargoKuaiRenderMissing();
+ }catch(e){box.textContent='Тайлангийн алдаа: '+e.message}
 }
 let cargoServerRows=[];
 function cargoResetServerFilters(){
