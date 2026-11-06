@@ -415,8 +415,22 @@ async function cargoKuaiRecognizeLabel(image){
   const recipientLine=lines.find(x=>/[a-z]{3,}[^\n]{0,12}[689]\d{7}/i.test(x));
   const recipientPhone=recipientLine?.match(/([689]\d{7})(?!\d)/)?.[1];
   const phone=recipientPhone||phoneMatches.find(x=>/^[689]\d{7}$/.test(x));
-  const nameLine=lines.find(x=>/\b(?:khulan|[a-z]{3,})\s+\d{8}\b/i.test(x));
-  const name=nameLine?.match(/\b([a-z]{3,})\s+\d{8}\b/i)?.[1]||'';
+  // Names may be separated from the phone by punctuation, underscores, or OCR line breaks.
+  // Only use a nearby Latin word; never infer a name from an unrelated part of the label.
+  const joined=lines.join(' ');
+  const phoneIndex=phone?joined.indexOf(phone):-1;
+  const context=phoneIndex>=0?joined.slice(Math.max(0,phoneIndex-45),phoneIndex+phone.length+18):'';
+  const beforePhone=phoneIndex>=0?joined.slice(Math.max(0,phoneIndex-45),phoneIndex):'';
+  const candidates=[...beforePhone.matchAll(/[A-Za-z][A-Za-z._-]{2,24}/g)].map(x=>x[0].replace(/^[._-]+|[._-]+$/g,''));
+  const excluded=new Set(['EXPRESS','ZTO','CARGO','PHONE','TEL','MOBILE','NAME','OMA','WWW','COM','LOGISTICS','KHULAN95901080']);
+  let name=candidates.reverse().find(x=>x.length>=3&&!excluded.has(x.toUpperCase())&&!/^[A-Z]{1,2}$/.test(x))||'';
+  if(!name&&phoneIndex>=0){
+   const after=joined.slice(phoneIndex+phone.length,phoneIndex+phone.length+25);
+   const found=after.match(/^\s*[,.:_-]?\s*([A-Za-z][A-Za-z._-]{2,20})\b/);
+   if(found&&!excluded.has(found[1].toUpperCase()))name=found[1];
+  }
+  // Avoid a guessed name when the nearby OCR context contains no recognizable name.
+  if(name&&context.length>65)name='';
   if(phone&&!document.getElementById('kuaiPhone').value)document.getElementById('kuaiPhone').value=phone;
   if(name&&!document.getElementById('kuaiName').value)document.getElementById('kuaiName').value=name;
   msg.textContent='✅ Трак код: '+code+'. '+(phone?'Утас танигдлаа. ':'Утас танигдсангүй. ')+(name?'Нэр танигдлаа. ':'')+'Мэдээллээ шалгаад хадгална уу.';
