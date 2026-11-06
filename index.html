@@ -2,20 +2,21 @@
 <html lang="mn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#123c62"><title>9090 CARGO туршилт</title><style>
 *{box-sizing:border-box}body{font:16px -apple-system,BlinkMacSystemFont,Arial;margin:0;background:#eef3f8;color:#17324c}header{background:#123c62;color:#fff;padding:26px 20px}h1{margin:0}small{opacity:.8}main{padding:16px;max-width:640px;margin:auto}.warn{background:#fff1cf;padding:12px;border-radius:10px;font-size:13px;margin-bottom:14px}.tabs{display:flex;gap:8px;margin:12px 0}.tabs button{flex:1}button{border:0;border-radius:10px;padding:12px;font-size:15px;font-weight:600;background:#dce8f2;color:#12416a}.active,.save{background:#1473bb;color:white}section{background:#fff;padding:16px;border-radius:14px}.hide{display:none}label{display:block;margin-top:12px;font-size:14px;font-weight:600}input,select{width:100%;padding:12px;margin-top:5px;border:1px solid #cbd5e1;border-radius:9px;font:inherit}.item{padding:13px 0;border-bottom:1px solid #e2e8f0}.item:last-child{border:0}.sub{font-size:13px;color:#66788c;margin-top:4px}.pill{display:inline-block;border-radius:20px;background:#dceeff;padding:5px 9px;font-size:12px}.flex{display:flex;justify-content:space-between;gap:8px;align-items:center}.empty{text-align:center;padding:25px;color:#66788c}footer{text-align:center;font-size:12px;color:#66788c;padding:22px} .photo{max-width:110px;max-height:100px;object-fit:cover;border-radius:9px;margin-top:9px}.qrbox{padding:12px;background:#f5f9fd;border-radius:12px;margin-top:10px}.qrbox img{width:160px;height:160px;display:block;margin:8px auto}.hint{font-size:12px;color:#6b7d8e}.summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}.metric{background:#f0f6fc;border-radius:10px;padding:12px}.metric strong{display:block;font-size:21px}.metric small{font-size:12px;color:#536c83}.history{background:#f8fafc;padding:9px;border-radius:9px;margin:9px 0}.history div{padding:5px 0;font-size:12px;color:#475569;border-bottom:1px solid #e5e7eb}.history div:last-child{border:0}.actions{display:flex;gap:7px;flex-wrap:wrap}.actions button{font-size:13px;padding:9px}.report{background:#fff;border-radius:14px;padding:15px;margin:12px 0}.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.filters select{min-width:0;font-size:13px}.report select{margin:8px 0}.smallbtn{font-size:13px;padding:9px}.photo-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.photo-grid img{width:78px;height:78px;object-fit:cover;border-radius:9px}.photo-grid button{padding:5px;font-size:12px}.photo-large{max-width:95vw;max-height:78vh;object-fit:contain}.photo-dialog{border:0;border-radius:12px;padding:15px;max-width:98vw}.photo-dialog::backdrop{background:#000b}.manifest{border-collapse:collapse;width:100%;font-size:12px}.manifest td,.manifest th{padding:7px;border-bottom:1px solid #dce5ee;text-align:left;white-space:nowrap}.manifest th{background:#eef3f8}.trip-card{border:1px solid #d8e5f1;padding:12px;border-radius:10px;margin:9px 0}.trip-card button{margin-top:8px}.queue-summary{background:#eef6ff;padding:12px;border-radius:10px;margin-top:12px}.queue-item{font-size:13px;padding:7px 0;border-bottom:1px solid #d6e4f2}.overdue{color:#a33b14;font-weight:700}</style></head>
 <body><header><div style="text-align:right"><button type="button" onclick="setLang('mn')">🇲🇳 Монгол</button> <button type="button" onclick="setLang('zh')">🇨🇳 中文</button></div><h1>🚚 9090 CARGO</h1><small>Өмнөговь • iPhone демо</small></header><main>
-<section id="customerTrackPanel" style="margin-bottom:14px;border:2px solid #cbddec">
-<h2>📦 Үйлчлүүлэгч — ачаа шалгах</h2>
-<p class="hint">Нэвтрэх шаардлагагүй. Анхны ачааны код болон утасны дугаараар бүх ачааныхаа түүхийг шалгана.</p>
+<div style="display:flex;gap:8px;margin-bottom:12px"><button type="button" id="showKuaiTab" onclick="cargoSwitchPublicTab('kuai')">📦 Куайди харилцагч</button><button type="button" id="showBigTab" onclick="cargoSwitchPublicTab('big')">🚚 Том ачаа</button></div>
+<section id="kuaiPublicPanel" style="margin-bottom:14px;border:2px solid #cbddec">
+<h2>📦 Куайди харилцагч / 快递查询</h2>
+<p class="hint">Хятадын трак кодоо оруулаад ачааны явцаа шалгана. Утасны дугаар шаардлагагүй.</p>
+<label>Хятадын трак код<input id="publicKuaiCode" autocomplete="off" placeholder="Жишээ: 79148504280146"></label>
+<button type="button" id="publicKuaiButton" onclick="cargoPublicKuaiLookup()">🔎 Куайди хайх</button>
+<p id="publicKuaiResult" role="status" class="sub"></p>
+</section>
+<section id="customerTrackPanel" class="hide" style="margin-bottom:14px;border:2px solid #cbddec">
+<h2>🚚 Том ачаа шалгах</h2>
+<p class="hint">Ачааны код болон бүртгэлтэй утасны дугаараа хоёуланг оруулна.</p>
 <label>Ачааны код<input id="customerTrackCode" type="text" autocomplete="off" placeholder="Жишээ: 9090-00125"></label>
 <label>Утасны дугаар<input id="customerTrackPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Жишээ: 99019090"></label>
 <button type="button" onclick="cargoCustomerLookup()">Ачаа шалгах</button>
-<p id="customerTrackResult" class="sub" role="status">Хэрэглэгчийн шалгах үйлчилгээг аюулгүй сервертэй холбож дуусгаагүй байна.</p>
-</section><section id="kuaiPublicPanel" style="margin-bottom:14px;border:2px solid #cbddec">
-<h2>📦 Хятад куайди шалгах / 快递查询</h2>
-<p class="hint">Эрээнд бүртгүүлсэн Хятадын трак код болон бүртгэлтэй утасны дугаараа оруулна уу.</p>
-<label>Хятадын трак код<input id="publicKuaiCode" autocomplete="off" placeholder="Жишээ: 79148504280146"></label>
-<label>Бүртгэлтэй утас<input id="publicKuaiPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Жишээ: 95901080"></label>
-<button type="button" id="publicKuaiButton" onclick="cargoPublicKuaiLookup()">📍 Куайди шалгах</button>
-<p id="publicKuaiResult" role="status" class="sub"></p>
+<p id="customerTrackResult" class="sub" role="status"></p>
 </section><section id="authPanel" style="margin-bottom:14px;border:2px solid #cbddec">
 <h2>🔐 Admin9090 нэвтрэлт</h2>
 <p class="hint">Энэ нэвтрэлт Supabase-д холбогдоно. Доорх ачааны демо одоогоор тусдаа, зөвхөн энэ утсанд хадгалагдана.</p>
@@ -76,17 +77,23 @@ let lang=localStorage.getItem('cargo9090_lang')||'mn';const originalText=new Wea
 function applyLang(){document.documentElement.lang=lang;document.querySelectorAll('body *').forEach(el=>{if(['SCRIPT','STYLE','INPUT','TEXTAREA'].includes(el.tagName))return;for(const node of el.childNodes){if(node.nodeType!==3||!node.textContent.trim())continue;if(!originalText.has(node))originalText.set(node,node.textContent);const original=originalText.get(node),trim=original.trim();if(lang==='zh'&&translations[trim])node.textContent=original.replace(trim,translations[trim]);else if(lang==='mn')node.textContent=original}})}
 function setLang(v){lang=v;localStorage.setItem('cargo9090_lang',v);applyLang()}
 
+function cargoSwitchPublicTab(tab){
+ document.getElementById('kuaiPublicPanel').classList.toggle('hide',tab!=='kuai');
+ document.getElementById('customerTrackPanel').classList.toggle('hide',tab!=='big');
+ document.getElementById('showKuaiTab').style.fontWeight=tab==='kuai'?'bold':'normal';
+ document.getElementById('showBigTab').style.fontWeight=tab==='big'?'bold':'normal';
+}
+cargoSwitchPublicTab('kuai');
 async function cargoPublicKuaiLookup(){
  const result=document.getElementById('publicKuaiResult'),button=document.getElementById('publicKuaiButton');
  const code=document.getElementById('publicKuaiCode').value.trim();
- const phone=document.getElementById('publicKuaiPhone').value.replace(/[\s()-]/g,'').trim();
- if(!/^[A-Za-z0-9-]{8,40}$/.test(code)||!/^\+?\d{8,15}$/.test(phone)){result.textContent='Трак код болон 8–15 оронтой утсаа зөв оруулна уу.';return}
+ if(!/^[A-Za-z0-9-]{8,40}$/.test(code)){result.textContent='Трак кодоо зөв оруулна уу.';return}
  button.disabled=true;result.textContent='Шалгаж байна…';
  try{
-  const response=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/functions/v1/kuai-public-track',{method:'POST',headers:{'Content-Type':'application/json','apikey':CARGO_PUBLIC_KEY},body:JSON.stringify({code,phone})});
+  const response=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/functions/v1/kuai-public-track',{method:'POST',headers:{'Content-Type':'application/json','apikey':CARGO_PUBLIC_KEY},body:JSON.stringify({code})});
   const data=await response.json();
   if(!response.ok)throw Error(data.error||'Түр алдаа гарлаа');
-  if(!data.found){result.textContent='Энэ код, утасны дугаартай бүртгэл олдсонгүй. Мэдээллээ шалгана уу.';return}
+  if(!data.found){result.textContent='Энэ трак кодоор бүртгэл олдсонгүй. Мэдээллээ шалгана уу.';return}
   const received=data.received_at?new Date(data.received_at).toLocaleString('mn-MN'):'—';
   result.textContent=data.status==='arrived'?'📍 Өмнөговьд ирсэн. Ирсэн: '+new Date(data.arrived_at).toLocaleString('mn-MN')+' · Эрээнд бүртгэсэн: '+received:'📦 Эрээнд бүртгэгдсэн: '+received+' · Өмнөговьд хараахан уншуулаагүй.';
  }catch(e){result.textContent='⚠️ '+e.message}finally{button.disabled=false}
