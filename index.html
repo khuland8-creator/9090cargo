@@ -429,8 +429,30 @@ async function cargoKuaiRecognizeLabel(image){
    const found=after.match(/^\s*[,.:_-]?\s*([A-Za-z][A-Za-z._-]{2,20})\b/);
    if(found&&!excluded.has(found[1].toUpperCase()))name=found[1];
   }
-  // Avoid a guessed name when the nearby OCR context contains no recognizable name.
-  if(name&&context.length>65)name='';
+  // If the name is too faint in the full-label OCR, retry a magnified crop
+  // immediately left of the recognized phone number (common courier label layout).
+  if(!name&&phone){
+   const words=result.data.words||[];
+   const phoneWord=words.find(w=>String(w.text||'').replace(/\D/g,'').includes(phone));
+   const b=phoneWord?.bbox;
+   if(b){
+    try{
+     const original=new Image();original.src=image;await original.decode();
+     const left=Math.max(0,Math.floor(b.x0-300)),top=Math.max(0,Math.floor(b.y0-30));
+     const right=Math.min(original.naturalWidth,Math.ceil(b.x1+20));
+     const bottom=Math.min(original.naturalHeight,Math.ceil(b.y1+30));
+     if(right>left&&bottom>top){
+      const canvas=document.createElement('canvas');canvas.width=(right-left)*2;canvas.height=(bottom-top)*2;
+      const ctx=canvas.getContext('2d');ctx.filter='grayscale(1) contrast(1.7)';
+      ctx.drawImage(original,left,top,right-left,bottom-top,0,0,canvas.width,canvas.height);
+      const second=await Tesseract.recognize(canvas,'eng');
+      const cropText=String(second.data.text||'');
+      const match=cropText.match(/([A-Za-z]{3,24})\s*[_.,:-]*\s*(?:[689][\d\s-]{7,11})/);
+      if(match&&!excluded.has(match[1].toUpperCase()))name=match[1];
+     }
+    }catch(e){}
+   }
+  }
   if(phone&&!document.getElementById('kuaiPhone').value)document.getElementById('kuaiPhone').value=phone;
   if(name&&!document.getElementById('kuaiName').value)document.getElementById('kuaiName').value=name;
   msg.textContent='✅ Трак код: '+code+'. '+(phone?'Утас танигдлаа. ':'Утас танигдсангүй. ')+(name?'Нэр танигдлаа. ':'')+'Мэдээллээ шалгаад хадгална уу.';
