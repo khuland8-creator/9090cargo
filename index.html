@@ -654,15 +654,25 @@ async function cargoKuaiLookupAll(){
  try{
   const term=encodeURIComponent('*'+q.replace(/[\\*]/g,'')+'*');
   const filter='or=(tracking_number.ilike.'+term+',customer_phone.ilike.'+term+',customer_name.ilike.'+term+')';
-  const url='https://hctnhiiytzhlphalwupl.supabase.co/rest/v1/cargo_kuai_di?select=tracking_number,customer_name,customer_phone,received_at,arrived_at&'+filter+'&order=received_at.desc&limit=101';
-  const res=await fetch(url,{headers:{apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+cargoSession.access_token}});
-  if(!res.ok)throw Error('Хайлтын серверийн алдаа ('+res.status+')');
+  const base='https://hctnhiiytzhlphalwupl.supabase.co/rest/v1/cargo_kuai_di?';
+  const headers={apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+cargoSession.access_token};
+  const url=base+'select=tracking_number,customer_name,customer_phone,received_at,arrived_at&'+filter+'&order=received_at.desc&limit=101';
+  const [res,totalRes,arrivedRes]=await Promise.all([
+   fetch(url,{headers}),
+   fetch(base+'select=id&'+filter,{method:'HEAD',headers:{...headers,Prefer:'count=exact'}}),
+   fetch(base+'select=id&'+filter+'&arrived_at=not.is.null',{method:'HEAD',headers:{...headers,Prefer:'count=exact'}})
+  ]);
+  if(!res.ok||!totalRes.ok||!arrivedRes.ok)throw Error('Хайлтын серверийн алдаа');
   const rows=await res.json();
+  const count=x=>Number((x.headers.get('content-range')||'0/0').split('/')[1])||0;
+  const totalCount=count(totalRes),arrivedCount=count(arrivedRes);
   if(seq!==cargoKuaiLookupAll.seq)return;
   box.replaceChildren();
   const title=document.createElement('p');
-  title.textContent='🔎 Олдсон: '+Math.min(rows.length,100)+(rows.length>100?' (эхний 100, хайлтаа нарийвчилна уу)':'');
+  title.textContent='📦 Нийт: '+totalCount+' · 📍 Өмнөговьд ирсэн: '+arrivedCount+' · ⏳ Хараахан уншуулаагүй: '+Math.max(0,totalCount-arrivedCount);
+  title.style.fontWeight='bold';
   box.appendChild(title);
+  if(totalCount>100){const hint=document.createElement('p');hint.className='hint';hint.textContent='Эхний 100 ачааг харуулж байна. Тооллого нь бүх тохирох бүртгэлийг хамарна.';box.appendChild(hint)}
   if(!rows.length){const empty=document.createElement('p');empty.textContent='Илэрц олдсонгүй.';box.appendChild(empty);return}
   for(const x of rows.slice(0,100)){
    const item=document.createElement('div');item.style.cssText='border-bottom:1px solid #ddd;padding:8px 0;overflow-wrap:anywhere';
