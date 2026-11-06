@@ -606,9 +606,9 @@ async function cargoKuaiSave(){
  const msg=document.getElementById('kuaiMessage'),button=document.getElementById('kuaiSave');
  if(!cargoSession?.access_token){msg.textContent='Нэвтэрнэ үү';return false}
  if(button.disabled)return false;
- const code=document.getElementById('kuaiCode').value.trim();
+ const code=document.getElementById('kuaiCode').value.trim().replace(/\s+/g,'');
  const mode=document.getElementById('kuaiMode').value;
- if(code.length<5||code.length>100){msg.textContent='Баркодын дугаарыг шалгана уу';return false}
+ if(!/^[A-Za-z0-9-]{5,100}$/.test(code)){msg.textContent='Баркод 5–100 тэмдэгттэй, зөвхөн үсэг, тоо, зураастай байх ёстой';return false}
  if(mode==='arrive'&&cargoSession.staffRole!=='admin'){msg.textContent='Өмнөговийн тулгалт админ эрхтэй';return false}
  const base='https://hctnhiiytzhlphalwupl.supabase.co/rest/v1/cargo_kuai_di';
  const headers={apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+cargoSession.access_token,'Content-Type':'application/json',Prefer:'return=representation'};
@@ -660,7 +660,7 @@ function cargoKuaiRenderMissing(){
 }
 function cargoKuaiDownloadMissing(){
  const lines=[['Баркод','Нэр','Утас','Эрээнд бүртгэсэн','Төлөв'],...cargoKuaiMissingRows.map(x=>[x.tracking_number,x.customer_name||'',x.customer_phone||'',x.received_at,'Өмнөговьд уншуулаагүй'])];
- const csv='\uFEFF'+lines.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+ const csv='\uFEFF'+lines.map(row=>row.map(v=>{let cell=String(v??'');if(/^[\s]*[=+@-]/.test(cell))cell="'"+cell;return '"'+cell.replace(/"/g,'""')+'"'}).join(',')).join('\r\n');
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
  const a=document.createElement('a');a.href=url;a.download='9090-kuai-di-not-arrived.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
