@@ -9,6 +9,13 @@
 <label>Утасны дугаар<input id="customerTrackPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Жишээ: 99019090"></label>
 <button type="button" onclick="cargoCustomerLookup()">Ачаа шалгах</button>
 <p id="customerTrackResult" class="sub" role="status">Хэрэглэгчийн шалгах үйлчилгээг аюулгүй сервертэй холбож дуусгаагүй байна.</p>
+</section><section id="kuaiPublicPanel" style="margin-bottom:14px;border:2px solid #cbddec">
+<h2>📦 Хятад куайди шалгах / 快递查询</h2>
+<p class="hint">Эрээнд бүртгүүлсэн Хятадын трак код болон бүртгэлтэй утасны дугаараа оруулна уу.</p>
+<label>Хятадын трак код<input id="publicKuaiCode" autocomplete="off" placeholder="Жишээ: 79148504280146"></label>
+<label>Бүртгэлтэй утас<input id="publicKuaiPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Жишээ: 95901080"></label>
+<button type="button" id="publicKuaiButton" onclick="cargoPublicKuaiLookup()">📍 Куайди шалгах</button>
+<p id="publicKuaiResult" role="status" class="sub"></p>
 </section><section id="authPanel" style="margin-bottom:14px;border:2px solid #cbddec">
 <h2>🔐 Admin9090 нэвтрэлт</h2>
 <p class="hint">Энэ нэвтрэлт Supabase-д холбогдоно. Доорх ачааны демо одоогоор тусдаа, зөвхөн энэ утсанд хадгалагдана.</p>
@@ -69,6 +76,21 @@ let lang=localStorage.getItem('cargo9090_lang')||'mn';const originalText=new Wea
 function applyLang(){document.documentElement.lang=lang;document.querySelectorAll('body *').forEach(el=>{if(['SCRIPT','STYLE','INPUT','TEXTAREA'].includes(el.tagName))return;for(const node of el.childNodes){if(node.nodeType!==3||!node.textContent.trim())continue;if(!originalText.has(node))originalText.set(node,node.textContent);const original=originalText.get(node),trim=original.trim();if(lang==='zh'&&translations[trim])node.textContent=original.replace(trim,translations[trim]);else if(lang==='mn')node.textContent=original}})}
 function setLang(v){lang=v;localStorage.setItem('cargo9090_lang',v);applyLang()}
 
+async function cargoPublicKuaiLookup(){
+ const result=document.getElementById('publicKuaiResult'),button=document.getElementById('publicKuaiButton');
+ const code=document.getElementById('publicKuaiCode').value.trim();
+ const phone=document.getElementById('publicKuaiPhone').value.replace(/[\\s()-]/g,'').trim();
+ if(!/^[A-Za-z0-9-]{8,40}$/.test(code)||!/^\\+?\\d{8,15}$/.test(phone)){result.textContent='Трак код болон 8–15 оронтой утсаа зөв оруулна уу.';return}
+ button.disabled=true;result.textContent='Шалгаж байна…';
+ try{
+  const response=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/functions/v1/kuai-public-track',{method:'POST',headers:{'Content-Type':'application/json','apikey':CARGO_PUBLIC_KEY},body:JSON.stringify({code,phone})});
+  const data=await response.json();
+  if(!response.ok)throw Error(data.error||'Түр алдаа гарлаа');
+  if(!data.found){result.textContent='Энэ код, утасны дугаартай бүртгэл олдсонгүй. Мэдээллээ шалгана уу.';return}
+  const received=data.received_at?new Date(data.received_at).toLocaleString('mn-MN'):'—';
+  result.textContent=data.status==='arrived'?'📍 Өмнөговьд ирсэн. Ирсэн: '+new Date(data.arrived_at).toLocaleString('mn-MN')+' · Эрээнд бүртгэсэн: '+received:'📦 Эрээнд бүртгэгдсэн: '+received+' · Өмнөговьд хараахан уншуулаагүй.';
+ }catch(e){result.textContent='⚠️ '+e.message}finally{button.disabled=false}
+}
 async function cargoCustomerLookup(){
  const code=document.getElementById('customerTrackCode').value.trim().toUpperCase();
  const phone=document.getElementById('customerTrackPhone').value.replace(/[\s()-]/g,'').trim();
