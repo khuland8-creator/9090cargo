@@ -79,8 +79,8 @@ function setLang(v){lang=v;localStorage.setItem('cargo9090_lang',v);applyLang()}
 async function cargoPublicKuaiLookup(){
  const result=document.getElementById('publicKuaiResult'),button=document.getElementById('publicKuaiButton');
  const code=document.getElementById('publicKuaiCode').value.trim();
- const phone=document.getElementById('publicKuaiPhone').value.replace(/[\\s()-]/g,'').trim();
- if(!/^[A-Za-z0-9-]{8,40}$/.test(code)||!/^\\+?\\d{8,15}$/.test(phone)){result.textContent='Трак код болон 8–15 оронтой утсаа зөв оруулна уу.';return}
+ const phone=document.getElementById('publicKuaiPhone').value.replace(/[\s()-]/g,'').trim();
+ if(!/^[A-Za-z0-9-]{8,40}$/.test(code)||!/^\+?\d{8,15}$/.test(phone)){result.textContent='Трак код болон 8–15 оронтой утсаа зөв оруулна уу.';return}
  button.disabled=true;result.textContent='Шалгаж байна…';
  try{
   const response=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/functions/v1/kuai-public-track',{method:'POST',headers:{'Content-Type':'application/json','apikey':CARGO_PUBLIC_KEY},body:JSON.stringify({code,phone})});
@@ -675,12 +675,13 @@ function cargoKuaiRenderLookup(){
 }
 function cargoKuaiSharePending(){
  const rows=cargoKuaiLookupRows.filter(x=>!x.arrived_at);
- if(!rows.length){document.getElementById('kuaiMessage').textContent='Энэ жагсаалтад ирээгүй ачаа алга.';return}
+ const message=document.getElementById('kuaiMessage');
+ if(!rows.length){if(message)message.textContent='Энэ жагсаалтад ирээгүй ачаа алга.';return}
  const lines=['9090 CARGO — Өмнөговьд хараахан уншуулаагүй ачаа','Нийт: '+rows.length+' (харагдаж буй хайлтын үр дүн)','',...rows.map((x,i)=>(i+1)+'. '+x.tracking_number)];
  if(cargoKuaiLookupHasMore)lines.push('Анхаар: Эхний 100 бүртгэлээс шүүсэн. Бүрэн жагсаалт биш.');
  lines.push('Энэ нь ачаа заавал алдагдсан гэсэн үг биш.');
- const content=lines.join('\\n').replace(/\\n/g,'\n');
- if(navigator.clipboard?.writeText){navigator.clipboard.writeText(content).then(()=>{document.getElementById('kuaiMessage').textContent='✅ Жагсаалтыг хууллаа. Илгээхээс өмнө шалгана уу.'}).catch(()=>prompt('Жагсаалтыг хуулна уу:',content))}
+ const content=lines.join(String.fromCharCode(10));
+ if(navigator.clipboard?.writeText){navigator.clipboard.writeText(content).then(()=>{if(message)message.textContent='✅ Жагсаалтыг хууллаа. Илгээхээс өмнө шалгана уу.'}).catch(()=>prompt('Жагсаалтыг хуулна уу:',content))}
  else prompt('Жагсаалтыг хуулна уу:',content);
 }
 let cargoKuaiLookupTimer=null;
