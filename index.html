@@ -635,6 +635,45 @@ function cargoKuaiDownloadMissing(){
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
  const a=document.createElement('a');a.href=url;a.download='9090-kuai-di-not-arrived.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+let cargoKuaiLookupTimer=null;
+function cargoKuaiLookupChanged(){
+ clearTimeout(cargoKuaiLookupTimer);
+ cargoKuaiLookupTimer=setTimeout(cargoKuaiLookupAll,450);
+}
+async function cargoKuaiLookupAll(){
+ const box=document.getElementById('kuaiLookupResults');
+ if(!box||cargoSession?.staffRole!=='admin'||!cargoSession?.access_token)return;
+ const raw=(document.getElementById('kuaiLookupInput')?.value||'').trim();
+ box.replaceChildren();
+ if(raw.length<3){box.textContent='Нэр, утас эсвэл трак кодоос 3-аас дээш тэмдэг бичнэ үү.';return}
+ // Restrict search syntax to ordinary text to avoid interpreting PostgREST operators.
+ const q=raw.replace(/[^\p{L}\p{N} _-]/gu,'').trim().slice(0,60);
+ if(q.length<3){box.textContent='Хайх үгээ шалгана уу.';return}
+ const seq=(cargoKuaiLookupAll.seq=(cargoKuaiLookupAll.seq||0)+1);
+ box.textContent='Ачаануудыг хайж байна…';
+ try{
+  const term=encodeURIComponent('*'+q.replace(/[\\*]/g,'')+'*');
+  const filter='or=(tracking_number.ilike.'+term+',customer_phone.ilike.'+term+',customer_name.ilike.'+term+')';
+  const url='https://hctnhiiytzhlphalwupl.supabase.co/rest/v1/cargo_kuai_di?select=tracking_number,customer_name,customer_phone,received_at,arrived_at&'+filter+'&order=received_at.desc&limit=101';
+  const res=await fetch(url,{headers:{apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+cargoSession.access_token}});
+  if(!res.ok)throw Error('Хайлтын серверийн алдаа ('+res.status+')');
+  const rows=await res.json();
+  if(seq!==cargoKuaiLookupAll.seq)return;
+  box.replaceChildren();
+  const title=document.createElement('p');
+  title.textContent='🔎 Олдсон: '+Math.min(rows.length,100)+(rows.length>100?' (эхний 100, хайлтаа нарийвчилна уу)':'');
+  box.appendChild(title);
+  if(!rows.length){const empty=document.createElement('p');empty.textContent='Илэрц олдсонгүй.';box.appendChild(empty);return}
+  for(const x of rows.slice(0,100)){
+   const item=document.createElement('div');item.style.cssText='border-bottom:1px solid #ddd;padding:8px 0;overflow-wrap:anywhere';
+   const code=document.createElement('strong');code.textContent=x.tracking_number;item.appendChild(code);
+   const detail=document.createElement('div');detail.textContent=(x.customer_name||'Нэргүй')+' · '+(x.customer_phone||'Утасгүй');item.appendChild(detail);
+   const status=document.createElement('div');status.className='hint';
+   status.textContent=(x.arrived_at?'📍 Өмнөговьд ирсэн: '+new Date(x.arrived_at).toLocaleString('mn-MN'):'⏳ Өмнөговьд хараахан уншуулаагүй')+' · Эрээнд: '+new Date(x.received_at).toLocaleString('mn-MN');
+   item.appendChild(status);box.appendChild(item);
+  }
+ }catch(e){if(seq===cargoKuaiLookupAll.seq)box.textContent='⚠️ '+e.message}
+}
 async function cargoKuaiReport(){
  if(!cargoSession?.access_token)return;
  const box=document.getElementById('kuaiReport');box.replaceChildren();
@@ -652,6 +691,10 @@ async function cargoKuaiReport(){
   box.appendChild(summary);
   const caution=document.createElement('p');caution.className='hint';caution.textContent='Анхаар: Уншуулаагүй куайди нь заавал тухайн машинаас дутсан гэсэн үг биш.';box.appendChild(caution);
   if(cargoSession.staffRole!=='admin')return;
+  const lookupTitle=document.createElement('h3');lookupTitle.textContent='🔎 Нэг хүний бүх куайдиг хайх';box.appendChild(lookupTitle);
+  const lookupHint=document.createElement('p');lookupHint.className='hint';lookupHint.textContent='Нэр, утас эсвэл трак кодоор хайхад Эрээнд бүртгэгдсэн болон Өмнөговьд ирсэн бүх ачааг хамтад нь харуулна.';box.appendChild(lookupHint);
+  const lookupInput=document.createElement('input');lookupInput.id='kuaiLookupInput';lookupInput.placeholder='Жишээ: 95901080 эсвэл khulan';lookupInput.oninput=cargoKuaiLookupChanged;box.appendChild(lookupInput);
+  const lookupResults=document.createElement('div');lookupResults.id='kuaiLookupResults';lookupResults.style.cssText='max-height:380px;overflow:auto;margin:8px 0';box.appendChild(lookupResults);
   const pending=n(total)-n(arrived);
   if(pending>5000){const warn=document.createElement('p');warn.textContent='5000-аас олон куайди байгаа тул дэлгэрэнгүй жагсаалтыг хэсэгчлэн татах шаардлагатай.';box.appendChild(warn);return}
   cargoKuaiMissingRows=[];
