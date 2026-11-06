@@ -279,8 +279,10 @@ async function cargoLogin(){
   document.getElementById('authLogout').classList.remove('hide');
   cargoMessage(staff.username+' — '+(staff.staff_role==='ereen'?'Эрээн агуулахын бүртгэл':'Админ')+' эрхээр нэвтэрлээ.');
   document.getElementById('serverPanel').classList.remove('hide');
+  document.getElementById('authPanel').classList.remove('hide');
+  document.getElementById('serverPanel').scrollIntoView({behavior:'smooth',block:'start'});
   cargoLoadServerShipments();
- }catch(e){cargoMessage('Нэвтрэхэд алдаа: '+e.message)}
+ }catch(e){cargoSession=null;cargoApplyStaffPermissions();document.getElementById('serverPanel').classList.add('hide');cargoMessage('Нэвтрэхэд алдаа: '+e.message)}
 }
 async function cargoResetRequest(){
  const entered=document.getElementById('authEmail').value.trim();
@@ -328,6 +330,7 @@ async function cargoLogout(){cargoKuaiStopCamera();
  document.getElementById('authLogout').classList.add('hide');
  document.getElementById('authPassword').value='';
  cargoMessage('Гарлаа.');
+ document.getElementById('authPanel').classList.add('hide');
 }
 async function cargoLoadPrivatePhoto(path,img){
  try{const res=await fetch('https://hctnhiiytzhlphalwupl.supabase.co/storage/v1/object/sign/cargo-photos/'+path,{method:'POST',headers:{apikey:CARGO_PUBLIC_KEY,Authorization:'Bearer '+cargoSession.access_token,'Content-Type':'application/json'},body:JSON.stringify({expiresIn:600})});if(!res.ok)throw Error('Зургийн эрх');const data=await res.json();img.src='https://hctnhiiytzhlphalwupl.supabase.co/storage/v1'+data.signedURL}catch(e){img.alt='Зургийг уншиж чадсангүй'}
