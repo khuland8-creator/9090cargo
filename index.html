@@ -635,6 +635,32 @@ function cargoKuaiDownloadMissing(){
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
  const a=document.createElement('a');a.href=url;a.download='9090-kuai-di-not-arrived.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+let cargoKuaiLookupRows=[],cargoKuaiLookupPendingOnly=false,cargoKuaiLookupHasMore=false;
+function cargoKuaiRenderLookup(){
+ const list=document.getElementById('kuaiLookupList');if(!list)return;
+ list.replaceChildren();
+ const rows=cargoKuaiLookupPendingOnly?cargoKuaiLookupRows.filter(x=>!x.arrived_at):cargoKuaiLookupRows;
+ const heading=document.createElement('p');heading.textContent='Харуулж буй: '+rows.length+(cargoKuaiLookupHasMore?' · Эхний 100 бүртгэл':'');list.appendChild(heading);
+ if(!rows.length){const p=document.createElement('p');p.textContent='Энэ шүүлтүүрт ачаа алга.';list.appendChild(p)}
+ for(const x of rows){
+  const item=document.createElement('div');item.style.cssText='border-bottom:1px solid #ddd;padding:8px 0;overflow-wrap:anywhere';
+  const code=document.createElement('strong');code.textContent=x.tracking_number;item.appendChild(code);
+  const detail=document.createElement('div');detail.textContent=(x.customer_name||'Нэргүй')+' · '+(x.customer_phone||'Утасгүй');item.appendChild(detail);
+  const status=document.createElement('div');status.className='hint';
+  status.textContent=(x.arrived_at?'📍 Өмнөговьд ирсэн: '+new Date(x.arrived_at).toLocaleString('mn-MN'):'⏳ Өмнөговьд хараахан уншуулаагүй')+' · Эрээнд: '+new Date(x.received_at).toLocaleString('mn-MN');
+  item.appendChild(status);list.appendChild(item);
+ }
+}
+function cargoKuaiSharePending(){
+ const rows=cargoKuaiLookupRows.filter(x=>!x.arrived_at);
+ if(!rows.length){document.getElementById('kuaiMessage').textContent='Энэ жагсаалтад ирээгүй ачаа алга.';return}
+ const lines=['9090 CARGO — Өмнөговьд хараахан уншуулаагүй ачаа','Нийт: '+rows.length+' (харагдаж буй хайлтын үр дүн)','',...rows.map((x,i)=>(i+1)+'. '+x.tracking_number)];
+ if(cargoKuaiLookupHasMore)lines.push('Анхаар: Эхний 100 бүртгэлээс шүүсэн. Бүрэн жагсаалт биш.');
+ lines.push('Энэ нь ачаа заавал алдагдсан гэсэн үг биш.');
+ const content=lines.join('\\n').replace(/\\n/g,'\n');
+ if(navigator.clipboard?.writeText){navigator.clipboard.writeText(content).then(()=>{document.getElementById('kuaiMessage').textContent='✅ Жагсаалтыг хууллаа. Илгээхээс өмнө шалгана уу.'}).catch(()=>prompt('Жагсаалтыг хуулна уу:',content))}
+ else prompt('Жагсаалтыг хуулна уу:',content);
+}
 let cargoKuaiLookupTimer=null;
 function cargoKuaiLookupChanged(){
  clearTimeout(cargoKuaiLookupTimer);
@@ -644,7 +670,7 @@ async function cargoKuaiLookupAll(){
  const box=document.getElementById('kuaiLookupResults');
  if(!box||cargoSession?.staffRole!=='admin'||!cargoSession?.access_token)return;
  const raw=(document.getElementById('kuaiLookupInput')?.value||'').trim();
- box.replaceChildren();
+ box.replaceChildren();cargoKuaiLookupRows=[];
  if(raw.length<3){box.textContent='Нэр, утас эсвэл трак кодоос 3-аас дээш тэмдэг бичнэ үү.';return}
  // Restrict search syntax to ordinary text to avoid interpreting PostgREST operators.
  const q=raw.replace(/[^\p{L}\p{N} _-]/gu,'').trim().slice(0,60);
@@ -672,16 +698,16 @@ async function cargoKuaiLookupAll(){
   title.textContent='📦 Нийт: '+totalCount+' · 📍 Өмнөговьд ирсэн: '+arrivedCount+' · ⏳ Хараахан уншуулаагүй: '+Math.max(0,totalCount-arrivedCount);
   title.style.fontWeight='bold';
   box.appendChild(title);
-  if(totalCount>100){const hint=document.createElement('p');hint.className='hint';hint.textContent='Эхний 100 ачааг харуулж байна. Тооллого нь бүх тохирох бүртгэлийг хамарна.';box.appendChild(hint)}
-  if(!rows.length){const empty=document.createElement('p');empty.textContent='Илэрц олдсонгүй.';box.appendChild(empty);return}
-  for(const x of rows.slice(0,100)){
-   const item=document.createElement('div');item.style.cssText='border-bottom:1px solid #ddd;padding:8px 0;overflow-wrap:anywhere';
-   const code=document.createElement('strong');code.textContent=x.tracking_number;item.appendChild(code);
-   const detail=document.createElement('div');detail.textContent=(x.customer_name||'Нэргүй')+' · '+(x.customer_phone||'Утасгүй');item.appendChild(detail);
-   const status=document.createElement('div');status.className='hint';
-   status.textContent=(x.arrived_at?'📍 Өмнөговьд ирсэн: '+new Date(x.arrived_at).toLocaleString('mn-MN'):'⏳ Өмнөговьд хараахан уншуулаагүй')+' · Эрээнд: '+new Date(x.received_at).toLocaleString('mn-MN');
-   item.appendChild(status);box.appendChild(item);
-  }
+  cargoKuaiLookupRows=rows.slice(0,100);cargoKuaiLookupHasMore=totalCount>100;
+  const controls=document.createElement('div');controls.style.cssText='display:flex;gap:10px;align-items:center;flex-wrap:wrap';
+  const label=document.createElement('label');label.style.cssText='display:flex;align-items:center;gap:5px';
+  const toggle=document.createElement('input');toggle.type='checkbox';toggle.style.width='auto';toggle.checked=cargoKuaiLookupPendingOnly;
+  toggle.onchange=()=>{cargoKuaiLookupPendingOnly=toggle.checked;cargoKuaiRenderLookup()};
+  label.appendChild(toggle);label.appendChild(document.createTextNode('⏳ Зөвхөн ирээгүйг харуулах'));controls.appendChild(label);
+  const share=document.createElement('button');share.type='button';share.textContent='📋 Ирээгүй трак кодуудыг хуулах';share.onclick=cargoKuaiSharePending;controls.appendChild(share);
+  box.appendChild(controls);
+  const list=document.createElement('div');list.id='kuaiLookupList';list.style.cssText='max-height:380px;overflow:auto;margin:8px 0';box.appendChild(list);
+  cargoKuaiRenderLookup();
  }catch(e){if(seq===cargoKuaiLookupAll.seq)box.textContent='⚠️ '+e.message}
 }
 async function cargoKuaiReport(){
